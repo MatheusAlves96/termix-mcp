@@ -9,7 +9,7 @@ import { BODY_SCHEMA_OVERRIDES, NOT_EXPOSED } from "../../src/catalog/overrides.
  * so a fix (good) or a newly-introduced gap (bad) both get noticed instead
  * of silently drifting. Update KNOWN_LIMITATIONS.md and this count together.
  */
-const KNOWN_GAP_COUNT = 44;
+const KNOWN_GAP_COUNT = 34;
 
 describe("known request-body gaps", () => {
   it("has the expected number of write operations with no body schema", () => {

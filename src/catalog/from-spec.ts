@@ -2,6 +2,7 @@ import { OPERATIONS, type RawOperation } from "../generated/operations.js";
 import { defaultAnnotations } from "./annotations.js";
 import {
   BODY_SCHEMA_OVERRIDES,
+  DESCRIPTION_NOTES,
   NOT_EXPOSED,
   RISK_OVERRIDES,
   TAG_TO_TOOLSET,
@@ -91,13 +92,15 @@ function buildToolFromOperation(op: RawOperation, seenNames: Set<string>): ToolS
   const risk = RISK_OVERRIDES[op.operationKey] ?? defaultRisk(op);
   const notExposedReason = NOT_EXPOSED[op.operationKey];
   const timeoutMs = LONG_RUNNING_TAGS.has(op.tag) ? LONG_TIMEOUT_MS : undefined;
+  const baseDescription = op.description ? `${op.summary}. ${op.description}` : op.summary;
+  const note = DESCRIPTION_NOTES[op.operationKey];
 
   return {
     name,
     toolset,
     operation: { method: op.method, path: op.path },
     title: op.summary,
-    description: op.description ? `${op.summary}. ${op.description}` : op.summary,
+    description: note ? `${baseDescription} ${note}` : baseDescription,
     inputSchema: schema,
     risk,
     annotations: defaultAnnotations(op.method, risk),
