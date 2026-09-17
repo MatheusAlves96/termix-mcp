@@ -1,0 +1,12 @@
+node_modules
+dist
+coverage
+.git
+.github
+*.md
+!README.md
+test
+specs/*.openapi.json.bak
+.env
+.env.*
+!.env.example

@@ -58,6 +58,8 @@
     "spec:inventory": "tsx scripts/inventory.ts",
     "spec:check-drift": "tsx scripts/check-drift.ts",
     "print-tools": "tsx src/index.ts --print-tools",
+    "e2e:provision": "tsx scripts/e2e-provision.ts",
+    "test:e2e": "vitest run test/e2e",
     "verify": "npm run lint && npm run typecheck && npm run test && npm run build"
   },
   "dependencies": {

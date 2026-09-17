@@ -46,6 +46,9 @@ export default tseslint.config(
       // (`expect(client.request).toHaveBeenCalled()`); it's never invoked
       // detached from its receiver, so the usual "this" hazard doesn't apply.
       "@typescript-eslint/unbound-method": "off",
+      // Test doubles often need `async () => {}` purely to satisfy a
+      // Promise-returning callback type, with nothing to await inside.
+      "@typescript-eslint/require-await": "off",
     },
   },
 );

@@ -152,3 +152,4 @@ vite.config.ts.timestamp-*
 *.tmp.json
 .termix-mcp/
 termix-mcp.config.local.json
+test/e2e/.env.e2e

@@ -1,0 +1,14 @@
+# Minimal Termix instance for the e2e smoke suite. Based on Termix's own
+# docker/docker-compose.yml (release-2.7.1), with guacd dropped since these
+# tests don't exercise RDP/VNC - Termix starts fine without it (it logs a
+# warning and continues; see src/backend/starter.ts upstream).
+services:
+  termix:
+    image: ghcr.io/lukegus/termix:latest
+    container_name: termix-mcp-e2e
+    ports:
+      - "8080:8080"
+    environment:
+      PORT: "8080"
+    tmpfs:
+      - /app/data

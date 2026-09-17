@@ -129,3 +129,161 @@ export const RISK_OVERRIDES: Record<string, Risk> = {
   "POST /guacamole/token": "secret",
   "POST /users/admin/totp/disable": "destructive",
 };
+
+// --- Manual request body schemas -------------------------------------------
+//
+// A handful of operations have a requestBody in Termix's spec with no usable
+// `properties` (or none at all) - the JSDoc `@openapi` comment documents the
+// response but not the request. The auto-derived schema for these is
+// therefore empty, which silently strips every field a caller passes (Zod's
+// default "strip" mode) and sends `{}` to Termix. Verified against
+// Termix-SSH/Termix @ release-2.7.1-tag by reading the route handler
+// directly, not guessed - see git history for how each was checked.
+import type { JsonSchema } from "../generated/operations.js";
+
+/**
+ * Fields for creating/updating an SSH host (src/backend/database/routes/host.ts,
+ * `POST /host/db/host` and `PUT /host/db/host/{id}`, which both accept a plain
+ * JSON body). `ip` and `port` are the only fields the handler actually
+ * requires; everything else has a server-side default. Deliberately covers
+ * the common SSH case, not the full ~90-field surface (RDP/VNC/Telnet
+ * sub-config, Proxmox stats config, SOCKS5 proxy chains, MAC/WOL, port
+ * knocking) - those are a good follow-up contribution once verified the same
+ * way against a live instance.
+ */
+const HOST_WRITE_PROPERTIES: Record<string, JsonSchema> = {
+  connectionType: { type: "string", description: 'ssh, rdp, vnc, or telnet. Defaults to "ssh".' },
+  name: { type: "string", description: "Display name. Defaults to username@ip if omitted." },
+  folder: { type: "string" },
+  parentHostId: {
+    type: "integer",
+    description: "Nests this host under another. Mutually exclusive with folder.",
+  },
+  tags: { type: "array", items: { type: "string" } },
+  ip: { type: "string" },
+  port: { type: "integer" },
+  username: { type: "string" },
+  password: { type: "string" },
+  authType: {
+    type: "string",
+    description:
+      "e.g. password, key, credential, vault, agent, keyboard-interactive, warpgate, opkssh.",
+  },
+  key: { type: "string", description: "Private key contents (PEM)." },
+  keyPassword: { type: "string", description: "Passphrase for an encrypted private key." },
+  keyType: { type: "string" },
+  credentialId: {
+    type: "integer",
+    description: "Use a saved credential instead of an inline password/key.",
+  },
+  vaultProfileId: {
+    type: "integer",
+    description: 'Use a Vault SSH signing profile (authType "vault").',
+  },
+  sudoPassword: { type: "string" },
+  pin: { type: "boolean" },
+  notes: { type: "string" },
+  defaultPath: { type: "string", description: "Default file manager path." },
+  enableTerminal: { type: "boolean" },
+  enableCommandHistory: { type: "boolean" },
+  enableTunnel: { type: "boolean" },
+  enableFileManager: { type: "boolean" },
+  enableDocker: { type: "boolean" },
+  enableProxmox: { type: "boolean" },
+  enableTmuxMonitor: { type: "boolean" },
+  enableTerminalToolbar: { type: "boolean" },
+  allowSessionSharing: { type: "boolean" },
+  showTerminalInSidebar: { type: "boolean" },
+  showFileManagerInSidebar: { type: "boolean" },
+  showTunnelInSidebar: { type: "boolean" },
+  showDockerInSidebar: { type: "boolean" },
+  showServerStatsInSidebar: { type: "boolean" },
+  jumpHosts: {
+    type: "array",
+    items: { type: "object" },
+    description: "Ordered list of jump host hop configs.",
+  },
+  tunnelConnections: { type: "array", items: { type: "object" } },
+  forceKeyboardInteractive: { type: "boolean" },
+  domain: { type: "string" },
+  useSocks5: { type: "boolean" },
+  socks5Host: { type: "string" },
+  socks5Port: { type: "integer" },
+  socks5Username: { type: "string" },
+  socks5Password: { type: "string" },
+};
+
+export const BODY_SCHEMA_OVERRIDES: Record<string, JsonSchema> = {
+  "POST /host/db/host": {
+    type: "object",
+    required: ["ip", "port"],
+    properties: HOST_WRITE_PROPERTIES,
+  },
+  "PUT /host/db/host/{id}": {
+    type: "object",
+    properties: HOST_WRITE_PROPERTIES,
+  },
+};
+
+/** Verified against src/backend/database/routes/alert-rules-routes.ts. */
+const ALERT_RULE_TRIGGER_TYPES = [
+  "host_offline",
+  "host_online",
+  "cpu_threshold",
+  "memory_threshold",
+  "disk_threshold",
+  "health_check_failure",
+  "health_check_recovery",
+  "user_login",
+];
+
+const ALERT_RULE_PROPERTIES: Record<string, JsonSchema> = {
+  name: { type: "string" },
+  hostId: { type: "integer", description: "Restrict this rule to one host. Omit for all hosts." },
+  enabled: { type: "boolean", default: true },
+  triggerType: { type: "string", enum: ALERT_RULE_TRIGGER_TYPES },
+  thresholdValue: {
+    type: "number",
+    description: "0-100. Required by cpu/memory/disk_threshold triggers.",
+  },
+  thresholdDurationSeconds: { type: "integer" },
+  cooldownMinutes: { type: "integer", default: 15 },
+  channels: {
+    type: "array",
+    items: { type: "integer" },
+    description: "Notification channel ids to fire.",
+  },
+};
+
+const NOTIFICATION_CHANNEL_PROPERTIES: Record<string, JsonSchema> = {
+  name: { type: "string" },
+  type: { type: "string", enum: ["webhook", "ntfy", "discord"] },
+  enabled: { type: "boolean", default: true },
+  config: {
+    type: "object",
+    description:
+      'Shape depends on "type". webhook/discord: {"url": string}. ntfy: {"url": string, "topic": string}. A discord webhook URL must match https://discord.com/api/webhooks/... (or canary./ptb. / discordapp.com).',
+    properties: { url: { type: "string" }, topic: { type: "string" } },
+  },
+};
+
+Object.assign(BODY_SCHEMA_OVERRIDES, {
+  "POST /alert-rules": {
+    type: "object",
+    required: ["name", "triggerType"],
+    properties: ALERT_RULE_PROPERTIES,
+  } satisfies JsonSchema,
+  "PUT /alert-rules/{id}": {
+    type: "object",
+    properties: ALERT_RULE_PROPERTIES,
+  } satisfies JsonSchema,
+  "POST /notification-channels": {
+    type: "object",
+    required: ["name", "type", "config"],
+    properties: NOTIFICATION_CHANNEL_PROPERTIES,
+  } satisfies JsonSchema,
+  "PUT /notification-channels/{id}": {
+    type: "object",
+    properties: NOTIFICATION_CHANNEL_PROPERTIES,
+  } satisfies JsonSchema,
+});

@@ -66,13 +66,24 @@ that the version is unvalidated.
 ## Sessions
 
 File manager, Docker, and host-metrics endpoints follow a connect → operate → keepalive → disconnect
-protocol with a server-side `sessionId`. `src/termix/sessions/session-manager.ts` hides this behind
-`hostId`-keyed tools: the high-level tools (list files, restart a container, get metrics) connect lazily,
-cache the session, send periodic keepalives, and transparently reconnect on a 401/404 session error. The
-raw connect/disconnect/keepalive/status operations from the spec stay in the catalog too, in their
-natural toolset (`files`, `docker`, `metrics`) rather than a separate one, for callers that want manual
-control - e.g. to hold a session open across many calls without repeated connect/keepalive under the
-hood.
+protocol with a server-side `sessionId`: a `connect` tool returns it, subsequent tools take it as an
+ordinary input field, and a `keepalive` tool has to be called periodically or the session expires.
+Today every one of those tools is generated straight from the spec (as described above), so the model
+manages `sessionId` itself the same way it would in a raw HTTP client - this already works correctly,
+since it mirrors Termix's real contract exactly.
+
+`src/termix/sessions/session-manager.ts` provides the other half: a generic, fully unit-tested
+`SessionManager<SessionId>` that turns that protocol into a single `withSession(hostId, fn)` call -
+connecting lazily, caching one session per host, keeping it alive on a timer, and reconnecting once if an
+operation reports the session is gone. It takes `connect`/`keepalive`/`disconnect` as plain functions, so
+its own logic (the part actually worth testing precisely) has no dependency on any specific endpoint's
+request or response shape.
+
+It is not yet wired into a Termix-specific `connect`/`keepalive`/`disconnect` triple or exposed as
+higher-level `hostId`-keyed tools that replace the raw ones - doing that well requires knowing each
+endpoint's exact field names, which is worth verifying against a live Termix instance rather than
+guessing. That wiring (one small module per domain: file manager, Docker, host metrics) is the natural
+next contribution on top of this class; see `CONTRIBUTING.md`.
 
 ## Safety gates
 

@@ -1,6 +1,12 @@
 import { OPERATIONS, type RawOperation } from "../generated/operations.js";
 import { defaultAnnotations } from "./annotations.js";
-import { NOT_EXPOSED, RISK_OVERRIDES, TAG_TO_TOOLSET, TOOLSET_OVERRIDES } from "./overrides.js";
+import {
+  BODY_SCHEMA_OVERRIDES,
+  NOT_EXPOSED,
+  RISK_OVERRIDES,
+  TAG_TO_TOOLSET,
+  TOOLSET_OVERRIDES,
+} from "./overrides.js";
 import { buildOperationIO } from "./schema-from-openapi.js";
 import type { Risk, ToolSpec, ToolsetId } from "./types.js";
 
@@ -78,7 +84,10 @@ function deriveName(op: RawOperation, toolset: ToolsetId, seen: Set<string>): st
 function buildToolFromOperation(op: RawOperation, seenNames: Set<string>): ToolSpec {
   const toolset = resolveToolset(op);
   const name = deriveName(op, toolset, seenNames);
-  const { schema, toRequest } = buildOperationIO(op);
+  const bodyOverride = BODY_SCHEMA_OVERRIDES[op.operationKey];
+  const { schema, toRequest } = buildOperationIO(
+    bodyOverride ? { ...op, requestBody: bodyOverride } : op,
+  );
   const risk = RISK_OVERRIDES[op.operationKey] ?? defaultRisk(op);
   const notExposedReason = NOT_EXPOSED[op.operationKey];
   const timeoutMs = LONG_RUNNING_TAGS.has(op.tag) ? LONG_TIMEOUT_MS : undefined;

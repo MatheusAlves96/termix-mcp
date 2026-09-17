@@ -65,6 +65,16 @@ Most of the catalog is derived automatically from the OpenAPI spec (`src/generat
 Every operation in the spec must have a catalog entry, even if `exposed: false` — a test enforces this,
 so builds fail loudly instead of silently dropping API coverage.
 
+## Good first contribution: session-aware high-level tools
+
+The file manager, Docker, and host-metrics endpoints require a `sessionId` obtained from a `connect` tool
+and refreshed via `keepalive` (see [ARCHITECTURE.md](ARCHITECTURE.md#sessions)). Those raw tools already
+work as generated. A nice improvement is a `hostId`-keyed high-level tool set on top of
+`src/termix/sessions/session-manager.ts` — e.g. `termix_files_browse(hostId, path)` that connects,
+lists, and lets the session live for reuse, instead of the model juggling `sessionId` itself. This needs
+a live Termix instance to verify the exact connect/keepalive/disconnect request and response shapes
+against, so it wasn't guessed at; a PR adding one domain at a time (file manager first) is very welcome.
+
 ## Updating for a new Termix release
 
 1. `npm run spec:fetch -- --tag release-X.Y.Z-tag`
