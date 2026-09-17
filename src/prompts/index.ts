@@ -58,35 +58,52 @@ export function reviewRecentAlertsPrompt({ hours }: z.infer<typeof reviewRecentA
   };
 }
 
-/**
- * Prompts are conversation starters, not automations - each just returns text
- * telling the model which tools to call and in what order. Kept small and
- * composable rather than trying to script a whole workflow, since the model
- * still decides based on what it actually finds at each step. The callbacks
- * are exported as plain functions above (diagnoseHostPrompt,
- * reviewRecentAlertsPrompt) so they're unit-testable without going through
- * the MCP transport plumbing.
- */
-export function registerPrompts(server: McpServer): void {
-  server.registerPrompt(
-    "diagnose-host",
-    {
-      title: "Diagnose a host",
-      description:
-        "Checks a host's connectivity, live metrics, and recent alerts, then summarizes its health.",
-      argsSchema: diagnoseHostArgs,
-    },
-    diagnoseHostPrompt,
-  );
+export interface PromptDef {
+  name: string;
+  title: string;
+  description: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  argsSchema: z.ZodObject<any>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  callback: (args: any) => any;
+}
 
-  server.registerPrompt(
-    "review-recent-alerts",
-    {
-      title: "Review recent alerts",
-      description:
-        "Summarizes alert firings from the last N hours and flags any that still need attention.",
-      argsSchema: reviewRecentAlertsArgs,
-    },
-    reviewRecentAlertsPrompt,
-  );
+/**
+ * Exported as data (not just registered inline) so `scripts/inventory.ts`
+ * can document these in TOOLSETS.md from the same source `registerPrompts`
+ * reads from - one list, so the docs can't silently drift from what's
+ * actually registered. Prompts are conversation starters, not automations -
+ * each just returns text telling the model which tools to call and in what
+ * order; the model still decides based on what it actually finds at each
+ * step. The callbacks (diagnoseHostPrompt, reviewRecentAlertsPrompt) are also
+ * exported individually so they're unit-testable without going through the
+ * MCP transport plumbing.
+ */
+export const PROMPT_DEFS: PromptDef[] = [
+  {
+    name: "diagnose-host",
+    title: "Diagnose a host",
+    description:
+      "Checks a host's connectivity, live metrics, and recent alerts, then summarizes its health.",
+    argsSchema: diagnoseHostArgs,
+    callback: diagnoseHostPrompt,
+  },
+  {
+    name: "review-recent-alerts",
+    title: "Review recent alerts",
+    description:
+      "Summarizes alert firings from the last N hours and flags any that still need attention.",
+    argsSchema: reviewRecentAlertsArgs,
+    callback: reviewRecentAlertsPrompt,
+  },
+];
+
+export function registerPrompts(server: McpServer): void {
+  for (const def of PROMPT_DEFS) {
+    server.registerPrompt(
+      def.name,
+      { title: def.title, description: def.description, argsSchema: def.argsSchema },
+      def.callback,
+    );
+  }
 }

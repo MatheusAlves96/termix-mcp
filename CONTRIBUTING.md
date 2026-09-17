@@ -17,18 +17,19 @@ npm test
 
 Useful scripts:
 
-| Script                                      | What it does                                                            |
-| ------------------------------------------- | ----------------------------------------------------------------------- |
-| `npm run dev`                               | Run the server from source with `tsx` (stdio transport).                |
-| `npm run lint` / `lint:fix`                 | ESLint.                                                                 |
-| `npm run typecheck`                         | `tsc --noEmit` project-wide.                                            |
-| `npm test` / `test:watch` / `test:coverage` | Vitest.                                                                 |
-| `npm run verify`                            | lint + typecheck + test + build, what CI runs.                          |
-| `npm run print-tools`                       | Print the effective tool catalog for your current config/env.           |
-| `npm run spec:fetch`                        | Download the Termix OpenAPI spec for a given release tag into `specs/`. |
-| `npm run spec:generate`                     | Regenerate `src/generated/operations.ts` from a spec in `specs/`.       |
-| `npm run spec:inventory`                    | Regenerate the `TOOLSETS.md` tables from the catalog.                   |
-| `npm run spec:check-drift`                  | Compare the committed spec against the latest Termix release.           |
+| Script                                      | What it does                                                                                        |
+| ------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `npm run dev`                               | Run the server from source with `tsx` (stdio transport).                                            |
+| `npm run lint` / `lint:fix`                 | ESLint.                                                                                             |
+| `npm run typecheck`                         | `tsc --noEmit` project-wide.                                                                        |
+| `npm test` / `test:watch` / `test:coverage` | Vitest.                                                                                             |
+| `npm run verify`                            | lint + typecheck + test + build, what CI runs.                                                      |
+| `npm run print-tools`                       | Print the effective tool catalog for your current config/env.                                       |
+| `npm run spec:fetch`                        | Download the Termix OpenAPI spec for a given release tag into `specs/`.                             |
+| `npm run spec:generate`                     | Regenerate `src/generated/operations.ts` from a spec in `specs/`.                                   |
+| `npm run spec:inventory`                    | Regenerate `TOOLSETS.md` from the catalog, resources, and prompts.                                  |
+| `npm run spec:check-docs`                   | What CI runs: fails if `TOOLSETS.md` is stale. Run this, not just `spec:inventory`, before pushing. |
+| `npm run spec:check-drift`                  | Compare the committed spec against the latest Termix release.                                       |
 
 ## Project layout
 
@@ -59,7 +60,8 @@ Most of the catalog is derived automatically from the OpenAPI spec (`src/generat
    appears in the spec).
 2. Override only what needs to change: `name`, `toolset`, `risk`, `exposed`/`exposedReason`, `versions`,
    `disabledIn`, or a custom `inputSchema`/`shape` function.
-3. Run `npm run spec:inventory` and commit the regenerated tables.
+3. Run `npm run spec:inventory` and commit the regenerated `TOOLSETS.md`. CI runs `spec:check-docs` and
+   fails the build if you forget - the same applies to adding/changing a resource or a prompt.
 4. If you added a `BODY_SCHEMA_OVERRIDES` entry, add a case for it in `test/unit/schema-from-openapi.test.ts`
    or a small dedicated test, and verify it against a real Termix instance if you can (see
    `test/e2e/`) - `KNOWN_LIMITATIONS.md` exists because some of these were guessed and are wrong.

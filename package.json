@@ -56,6 +56,7 @@
     "spec:fetch": "tsx scripts/fetch-spec.ts",
     "spec:generate": "tsx scripts/generate.ts",
     "spec:inventory": "tsx scripts/inventory.ts",
+    "spec:check-docs": "tsx scripts/check-docs.ts",
     "spec:check-drift": "tsx scripts/check-drift.ts",
     "print-tools": "tsx src/index.ts --print-tools",
     "e2e:provision": "tsx scripts/e2e-provision.ts",

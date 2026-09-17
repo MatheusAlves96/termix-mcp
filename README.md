@@ -97,11 +97,17 @@ All configuration is via environment variables (CLI flags override them; see `te
 See [CONFIGURATION.md](CONFIGURATION.md) for the full reference, and [SECURITY.md](SECURITY.md) for the
 threat model behind the safety gates.
 
-## Toolsets
+## Toolsets, resources, and prompts
 
 Tools are grouped into toolsets you can enable independently. See [TOOLSETS.md](TOOLSETS.md) for the
-full list, what's on by default, and what's intentionally not exposed (login/OIDC/WebAuthn flows,
-interactive terminal/RDP over WebSocket, etc. — see [ARCHITECTURE.md](ARCHITECTURE.md) for why).
+full list (416 tools across 27 toolsets), what's on by default, and what's intentionally not exposed
+(login/OIDC/WebAuthn flows, interactive terminal/RDP over WebSocket, etc. — see
+[ARCHITECTURE.md](ARCHITECTURE.md) for why). The same file also documents the 5 MCP resources
+(`termix://hosts`, `termix://snippets`, `termix://fleets`, `termix://hosts/status`,
+`termix://system/status`) and the 2 prompts (`diagnose-host`, `review-recent-alerts`).
+
+`TOOLSETS.md` is generated from the code (`npm run spec:inventory`), not hand-maintained — CI fails if it
+falls out of date with `src/catalog`, `src/resources`, or `src/prompts`.
 
 Run `npx termix-mcp --print-tools` to see the exact set of tools active for your configuration and
 detected Termix version.
