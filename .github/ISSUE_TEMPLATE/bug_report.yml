@@ -1,0 +1,40 @@
+name: Bug report
+description: Something isn't working as expected
+labels: ["bug"]
+body:
+  - type: input
+    id: termix-mcp-version
+    attributes:
+      label: termix-mcp version
+      placeholder: "0.1.0"
+    validations:
+      required: true
+  - type: input
+    id: termix-version
+    attributes:
+      label: Termix version
+      placeholder: "2.7.1"
+    validations:
+      required: true
+  - type: dropdown
+    id: transport
+    attributes:
+      label: Transport
+      options:
+        - stdio (npx / desktop client)
+        - http (docker / self-hosted)
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs
+      description: Run with `LOG_LEVEL=debug`. Redact your TERMIX_URL/API key if needed.
+      render: shell

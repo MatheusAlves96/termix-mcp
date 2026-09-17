@@ -1,0 +1,33 @@
+{
+  "compilerOptions": {
+    // tsup's dts bundler (rollup-plugin-dts) injects a `baseUrl` into the
+    // program it builds from this file; TypeScript 6.0 hard-deprecated that
+    // option, so builds fail without this even though nothing here sets
+    // baseUrl directly.
+    "ignoreDeprecations": "6.0",
+    "target": "ES2023",
+    "lib": ["ES2023"],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "moduleDetection": "force",
+    "verbatimModuleSyntax": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "isolatedModules": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "resolveJsonModule": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "outDir": "dist",
+    "rootDir": "."
+  },
+  "include": ["src", "scripts", "test", "vitest.config.ts", "tsup.config.ts", "package.json"],
+  "exclude": ["dist", "node_modules"]
+}

@@ -1,0 +1,33 @@
+name: E2E (live Termix)
+
+on:
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Start a real Termix instance
+        run: docker compose -f test/e2e/docker-compose.yml up -d --wait
+      - name: Provision admin user and API key
+        run: npm run --silent e2e:provision
+      - name: Run e2e suite against it
+        run: npm run test:e2e
+        env:
+          TERMIX_URL: http://localhost:8080
+      - if: always()
+        run: docker compose -f test/e2e/docker-compose.yml logs
+      - if: always()
+        run: docker compose -f test/e2e/docker-compose.yml down -v

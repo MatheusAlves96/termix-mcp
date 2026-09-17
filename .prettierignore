@@ -1,0 +1,7 @@
+dist
+coverage
+node_modules
+specs/*.json
+docs/api-inventory.md
+pnpm-lock.yaml
+package-lock.json

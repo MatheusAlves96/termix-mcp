@@ -1,0 +1,16 @@
+name: New Termix version support
+description: Report that a Termix release needs catalog updates
+labels: ["termix-compat"]
+body:
+  - type: input
+    id: termix-version
+    attributes:
+      label: Termix version/tag
+      placeholder: "release-2.8.0-tag"
+    validations:
+      required: true
+  - type: textarea
+    id: changes
+    attributes:
+      label: What changed in the API
+      description: New/removed/renamed endpoints, if known. Link the release notes.

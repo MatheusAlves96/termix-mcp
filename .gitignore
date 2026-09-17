@@ -144,3 +144,11 @@ vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
 
+
+# Internal planning notes (pt-br) - never publish
+/docs/
+
+# termix-mcp project specific
+*.tmp.json
+.termix-mcp/
+termix-mcp.config.local.json
