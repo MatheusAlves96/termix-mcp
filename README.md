@@ -111,6 +111,13 @@ detected Termix version.
 See [COMPATIBILITY.md](COMPATIBILITY.md) for the matrix of Termix versions this project is tested
 against.
 
+## Known limitations
+
+A handful of write operations have a request body that Termix's own OpenAPI spec doesn't document; most
+are verified and fixed, some aren't yet. See [KNOWN_LIMITATIONS.md](KNOWN_LIMITATIONS.md) for the exact
+list before relying on a tool outside the ones covered by the e2e suite (hosts, alert rules, notification
+channels).
+
 ## Contributing
 
 Contributions are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md) for how the codebase is organized,
