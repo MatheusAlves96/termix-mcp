@@ -44,7 +44,7 @@ src/
   config/       Environment/CLI config parsing and validation (zod)
 scripts/        Spec fetch/generate/inventory/drift-check CLIs (run with tsx, not bundled)
 specs/          Committed OpenAPI specs, one per supported Termix release
-test/           unit/, integration/ (mocked HTTP via msw), e2e/ (gated, needs a real Termix)
+test/           unit/ (pure logic, vi.fn() mocks for TermixClient), e2e/ (gated, needs a real Termix)
 ```
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for the design rationale (why per-operation tools, why toolsets,
@@ -60,7 +60,9 @@ Most of the catalog is derived automatically from the OpenAPI spec (`src/generat
 2. Override only what needs to change: `name`, `toolset`, `risk`, `exposed`/`exposedReason`, `versions`,
    `disabledIn`, or a custom `inputSchema`/`shape` function.
 3. Run `npm run spec:inventory` and commit the regenerated tables.
-4. Add or update a test in `test/integration/` for the toolset touched.
+4. If you added a `BODY_SCHEMA_OVERRIDES` entry, add a case for it in `test/unit/schema-from-openapi.test.ts`
+   or a small dedicated test, and verify it against a real Termix instance if you can (see
+   `test/e2e/`) - `KNOWN_LIMITATIONS.md` exists because some of these were guessed and are wrong.
 
 Every operation in the spec must have a catalog entry, even if `exposed: false` — a test enforces this,
 so builds fail loudly instead of silently dropping API coverage.

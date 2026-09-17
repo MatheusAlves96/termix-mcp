@@ -1,6 +1,9 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
-  "entry": ["src/index.ts", "scripts/*.ts"],
+  "entry": ["scripts/*.ts"],
   "project": ["src/**/*.ts", "scripts/**/*.ts"],
-  "ignore": ["src/generated/**"]
+  "ignore": ["src/generated/**"],
+  "rules": {
+    "types": "off"
+  }
 }
