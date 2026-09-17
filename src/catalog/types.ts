@@ -32,8 +32,7 @@ export type ToolsetId =
   | "ui-state"
   | "homepage"
   | "ai"
-  | "sync"
-  | "sessions";
+  | "sync";
 
 export interface ToolOperation {
   method: HttpMethod;

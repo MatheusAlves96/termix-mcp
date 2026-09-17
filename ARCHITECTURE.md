@@ -69,9 +69,10 @@ File manager, Docker, and host-metrics endpoints follow a connect → operate �
 protocol with a server-side `sessionId`. `src/termix/sessions/session-manager.ts` hides this behind
 `hostId`-keyed tools: the high-level tools (list files, restart a container, get metrics) connect lazily,
 cache the session, send periodic keepalives, and transparently reconnect on a 401/404 session error. The
-raw connect/disconnect/keepalive/status operations are still exposed individually under the `sessions`
-toolset (off by default) for callers that want manual control — e.g. to hold a session open across many
-calls without repeated connect/keepalive under the hood.
+raw connect/disconnect/keepalive/status operations from the spec stay in the catalog too, in their
+natural toolset (`files`, `docker`, `metrics`) rather than a separate one, for callers that want manual
+control - e.g. to hold a session open across many calls without repeated connect/keepalive under the
+hood.
 
 ## Safety gates
 

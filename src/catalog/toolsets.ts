@@ -172,13 +172,6 @@ export const TOOLSET_DEFS: ToolsetDef[] = [
     description: "Internal desktop/server sync protocol.",
     defaultEnabled: false,
   },
-  {
-    id: "sessions",
-    label: "Sessions (manual)",
-    description:
-      "Raw connect/disconnect/keepalive/status for file manager, Docker, and metrics sessions.",
-    defaultEnabled: false,
-  },
 ];
 
 export const TOOLSET_IDS: ToolsetId[] = TOOLSET_DEFS.map((t) => t.id);

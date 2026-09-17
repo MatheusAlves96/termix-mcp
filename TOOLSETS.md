@@ -5,4 +5,639 @@
 This file is regenerated from `src/catalog/index.ts`. Run `npm run spec:inventory` after any catalog
 change and commit the result.
 
-_Not generated yet — run `npm run spec:inventory` once the catalog exists (see [ARCHITECTURE.md](ARCHITECTURE.md))._
+416 operations total, 392 exposed as tools, 24 intentionally not exposed (see reasons below and [ARCHITECTURE.md](ARCHITECTURE.md#whats-not-exposed-and-why)).
+
+| Toolset                                 | Default | Tools | Description                                                            |
+| --------------------------------------- | ------- | ----- | ---------------------------------------------------------------------- |
+| [`system`](#system)                     | on      | 4     | Health, version, and release info.                                     |
+| [`hosts`](#hosts)                       | on      | 41    | SSH host CRUD, folders, import/export, autostart, quick-connect.       |
+| [`credentials`](#credentials)           | on      | 17    | SSH credential management.                                             |
+| [`snippets`](#snippets)                 | on      | 14    | Saved command snippets, including remote execution.                    |
+| [`fleets`](#fleets)                     | on      | 14    | Grouped multi-host operations: execute, packages, transfer, inventory. |
+| [`metrics`](#metrics)                   | on      | 30    | Host status, metrics history, and process/service/TLS/VPN managers.    |
+| [`docker`](#docker)                     | on      | 17    | Docker container lifecycle and stats over an SSH-backed session.       |
+| [`files`](#files)                       | on      | 27    | Remote file operations over an SSH-backed session, plus bookmarks.     |
+| [`tunnels`](#tunnels)                   | on      | 9     | SSH tunnel connect/status and saved tunnel presets.                    |
+| [`automations`](#automations)           | on      | 9     | Scheduled and webhook-triggered automations.                           |
+| [`alerts`](#alerts)                     | on      | 16    | Alert rules, notification channels, and firings.                       |
+| [`audit`](#audit)                       | on      | 3     | Audit log querying and export.                                         |
+| [`session-logs`](#session-logs)         | on      | 4     | Recorded terminal session metadata and content.                        |
+| [`proxmox`](#proxmox)                   | on      | 5     | Proxmox host discovery and node/VM statistics.                         |
+| [`tailscale`](#tailscale)               | on      | 1     | Tailscale device listing.                                              |
+| [`terminal-history`](#terminal-history) | on      | 6     | Per-host terminal command history.                                     |
+| [`network-topology`](#network-topology) | off     | 2     | Saved network topology diagrams.                                       |
+| [`termix-id`](#termix-id)               | off     | 15    | Built-in SSH certificate authority and issued keys.                    |
+| [`vault`](#vault)                       | off     | 5     | HashiCorp Vault SSH signing profiles.                                  |
+| [`session-sharing`](#session-sharing)   | off     | 5     | Live terminal session collaboration links.                             |
+| [`guacamole`](#guacamole)               | off     | 2     | RDP/VNC/Telnet connection token generation.                            |
+| [`admin`](#admin)                       | off     | 92    | User management, RBAC, API keys, SSO, and instance settings.           |
+| [`account`](#account)                   | off     | 20    | The API key's own user profile and preferences.                        |
+| [`ui-state`](#ui-state)                 | off     | 23    | Workspaces, open tabs, and UI/sidebar display preferences.             |
+| [`homepage`](#homepage)                 | off     | 18    | Homepage service links, layout, and dashboard activity.                |
+| [`ai`](#ai)                             | off     | 13    | Termix's own AI assistant provider/conversation management.            |
+| [`sync`](#sync)                         | off     | 4     | Internal desktop/server sync protocol.                                 |
+
+## system
+
+Health, version, and release info. Enabled by default: **yes**.
+
+| Tool                                       | Operation                   | Risk | Summary                    |
+| ------------------------------------------ | --------------------------- | ---- | -------------------------- |
+| `termix_system_check_if_setup_is_required` | GET `/users/setup-required` | read | Check if setup is required |
+| `termix_system_health`                     | GET `/health`               | read | Termix health check        |
+| `termix_system_releases`                   | GET `/releases/rss`         | read | List Termix releases       |
+| `termix_system_version`                    | GET `/version`              | read | Get Termix version         |
+
+## hosts
+
+SSH host CRUD, folders, import/export, autostart, quick-connect. Enabled by default: **yes**.
+
+| Tool                                                              | Operation                               | Risk                                                                            | Summary                                                                             |
+| ----------------------------------------------------------------- | --------------------------------------- | ------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `termix_hosts_add_pinned_file`                                    | POST `/host/file_manager/pinned`        | write                                                                           | Add pinned file                                                                     |
+| `termix_hosts_add_recent_file`                                    | POST `/host/file_manager/recent`        | write                                                                           | Add recent file                                                                     |
+| `termix_hosts_add_shortcut`                                       | POST `/host/file_manager/shortcuts`     | write                                                                           | Add shortcut                                                                        |
+| `termix_hosts_bulk_import_ssh_hosts`                              | POST `/host/bulk-import`                | write                                                                           | Bulk import SSH hosts                                                               |
+| `termix_hosts_bulk_update_partial_fields_multiple_ssh`            | PATCH `/host/bulk-update`               | write                                                                           | Bulk update partial fields on multiple SSH hosts                                    |
+| `termix_hosts_create_ssh_host`                                    | POST `/host/db/host`                    | write                                                                           | Create SSH host                                                                     |
+| `termix_hosts_create_temporary_ssh_connection_without_saving`     | POST `/host/quick-connect`              | write                                                                           | Create a temporary SSH connection without saving to database                        |
+| `termix_hosts_delete_all_hosts_folder`                            | DELETE `/host/folders/{name}/hosts`     | destructive                                                                     | Delete all hosts in folder                                                          |
+| `termix_hosts_delete_command_history`                             | DELETE `/host/command-history`          | destructive                                                                     | Delete command from history                                                         |
+| `termix_hosts_delete_opkssh_token_host`                           | DELETE `/host/opkssh/token/{hostId}`    | destructive                                                                     | Delete OPKSSH token for a host                                                      |
+| `termix_hosts_delete_ssh_host`                                    | DELETE `/host/db/host/{id}`             | destructive                                                                     | Delete SSH host                                                                     |
+| `termix_hosts_disable_autostart_ssh_configuration`                | DELETE `/host/autostart/disable`        | destructive                                                                     | Disable autostart for SSH configuration                                             |
+| `termix_hosts_enable_autostart_ssh_configuration`                 | POST `/host/autostart/enable`           | write                                                                           | Enable autostart for SSH configuration                                              |
+| `termix_hosts_enroll_host_api_key`                                | POST `/host/enroll`                     | write                                                                           | Enroll a host with an API key                                                       |
+| `termix_hosts_export_all_ssh_hosts`                               | GET `/host/db/hosts/export`             | secret                                                                          | Export all SSH hosts                                                                |
+| `termix_hosts_export_ssh_host`                                    | GET `/host/db/host/{id}/export`         | secret                                                                          | Export SSH host                                                                     |
+| `termix_hosts_get_all_folders`                                    | GET `/host/folders`                     | read                                                                            | Get all folders                                                                     |
+| `termix_hosts_get_all_internal_ssh_host_data`                     | GET `/host/db/host/internal/all`        | not exposed - requires Termix's internal service auth token, not a user API key | Get all internal SSH host data                                                      |
+| `termix_hosts_get_all_ssh_hosts`                                  | GET `/host/db/host`                     | read                                                                            | Get all SSH hosts                                                                   |
+| `termix_hosts_get_autostart_status`                               | GET `/host/autostart/status`            | read                                                                            | Get autostart status                                                                |
+| `termix_hosts_get_command_history`                                | GET `/host/command-history/{hostId}`    | read                                                                            | Get command history                                                                 |
+| `termix_hosts_get_host_password_clipboard_copy`                   | GET `/host/db/host/{id}/password`       | secret                                                                          | Get host password for clipboard copy                                                |
+| `termix_hosts_get_internal_ssh_host_data`                         | GET `/host/db/host/internal`            | not exposed - requires Termix's internal service auth token, not a user API key | Get internal SSH host data                                                          |
+| `termix_hosts_get_opkssh_token_status_host`                       | GET `/host/opkssh/token/{hostId}`       | read                                                                            | Get OPKSSH token status for a host                                                  |
+| `termix_hosts_get_pinned_files`                                   | GET `/host/file_manager/pinned`         | read                                                                            | Get pinned files                                                                    |
+| `termix_hosts_get_recent_files`                                   | GET `/host/file_manager/recent`         | read                                                                            | Get recent files                                                                    |
+| `termix_hosts_get_shortcuts`                                      | GET `/host/file_manager/shortcuts`      | read                                                                            | Get shortcuts                                                                       |
+| `termix_hosts_get_ssh_host_id`                                    | GET `/host/db/host/{id}`                | read                                                                            | Get SSH host by ID                                                                  |
+| `termix_hosts_import_hosts_openssh_config_file`                   | POST `/host/ssh-config-import`          | write                                                                           | Import hosts from an OpenSSH config file                                            |
+| `termix_hosts_oauth_callback_oidc_provider_opkssh_authentication` | GET `/host/opkssh-callback/{requestId}` | not exposed - OAuth browser callback                                            | OAuth callback from OIDC provider for OPKSSH authentication (handles all sub-paths) |
+| `termix_hosts_proxy_opkssh_provider_chooser_page_all`             | GET `/host/opkssh-chooser/{requestId}`  | not exposed - proxies an interactive HTML chooser page                          | Proxy OPKSSH provider chooser page and all related resources                        |
+| `termix_hosts_remove_pinned_file`                                 | DELETE `/host/file_manager/pinned`      | destructive                                                                     | Remove pinned file                                                                  |
+| `termix_hosts_remove_recent_file`                                 | DELETE `/host/file_manager/recent`      | destructive                                                                     | Remove recent file                                                                  |
+| `termix_hosts_remove_shortcut`                                    | DELETE `/host/file_manager/shortcuts`   | destructive                                                                     | Remove shortcut                                                                     |
+| `termix_hosts_rename_folder`                                      | PUT `/host/folders/rename`              | write                                                                           | Rename folder                                                                       |
+| `termix_hosts_reorder_folders`                                    | PUT `/host/folders/reorder`             | write                                                                           | Reorder folders                                                                     |
+| `termix_hosts_reorder_hosts`                                      | PUT `/host/reorder`                     | write                                                                           | Reorder hosts                                                                       |
+| `termix_hosts_static_oauth_callback_oidc_provider_opkssh`         | GET `/host/opkssh-callback`             | not exposed - OAuth browser callback                                            | Static OAuth callback from OIDC provider for OPKSSH authentication                  |
+| `termix_hosts_test_proxy_connectivity`                            | POST `/host/db/proxy/test`              | write                                                                           | Test proxy connectivity                                                             |
+| `termix_hosts_update_folder_metadata`                             | PUT `/host/folders/metadata`            | write                                                                           | Update folder metadata                                                              |
+| `termix_hosts_update_ssh_host`                                    | PUT `/host/db/host/{id}`                | write                                                                           | Update SSH host                                                                     |
+
+## credentials
+
+SSH credential management. Enabled by default: **yes**.
+
+| Tool                                                 | Operation                                       | Risk        | Summary                              |
+| ---------------------------------------------------- | ----------------------------------------------- | ----------- | ------------------------------------ |
+| `termix_credentials_apply_credential_host`           | POST `/credentials/{id}/apply-to-host/{hostId}` | write       | Apply a credential to a host         |
+| `termix_credentials_create_new_credential`           | POST `/credentials`                             | write       | Create a new credential              |
+| `termix_credentials_delete_credential`               | DELETE `/credentials/{id}`                      | destructive | Delete a credential                  |
+| `termix_credentials_deploy_ssh_key_host`             | POST `/credentials/{id}/deploy-to-host`         | write       | Deploy SSH key to a host             |
+| `termix_credentials_detect_ssh_key_type`             | POST `/credentials/detect-key-type`             | write       | Detect SSH key type                  |
+| `termix_credentials_detect_ssh_public_key_type`      | POST `/credentials/detect-public-key-type`      | write       | Detect SSH public key type           |
+| `termix_credentials_duplicate_credential`            | POST `/credentials/{id}/duplicate`              | write       | Duplicate a credential               |
+| `termix_credentials_generate_new_ssh_key_pair`       | POST `/credentials/generate-key-pair`           | secret      | Generate new SSH key pair            |
+| `termix_credentials_generate_public_key_private_key` | POST `/credentials/generate-public-key`         | write       | Generate public key from private key |
+| `termix_credentials_get_all_credentials`             | GET `/credentials`                              | read        | Get all credentials                  |
+| `termix_credentials_get_credential_folders`          | GET `/credentials/folders`                      | read        | Get credential folders               |
+| `termix_credentials_get_hosts_using_credential`      | GET `/credentials/{id}/hosts`                   | read        | Get hosts using a credential         |
+| `termix_credentials_get_specific_credential`         | GET `/credentials/{id}`                         | read        | Get a specific credential            |
+| `termix_credentials_rename_credential_folder`        | PUT `/credentials/folders/rename`               | write       | Rename a credential folder           |
+| `termix_credentials_reorder_credentials`             | PUT `/credentials/reorder`                      | write       | Reorder credentials                  |
+| `termix_credentials_update_credential`               | PUT `/credentials/{id}`                         | write       | Update a credential                  |
+| `termix_credentials_validate_ssh_key_pair`           | POST `/credentials/validate-key-pair`           | write       | Validate SSH key pair                |
+
+## snippets
+
+Saved command snippets, including remote execution. Enabled by default: **yes**.
+
+| Tool                                                  | Operation                               | Risk        | Summary                                    |
+| ----------------------------------------------------- | --------------------------------------- | ----------- | ------------------------------------------ |
+| `termix_snippets_bulk_import_snippets_folders_json`   | POST `/snippets/bulk-import`            | write       | Bulk import snippets and folders from JSON |
+| `termix_snippets_create_new_snippet`                  | POST `/snippets`                        | write       | Create a new snippet                       |
+| `termix_snippets_create_new_snippet_folder`           | POST `/snippets/folders`                | write       | Create a new snippet folder                |
+| `termix_snippets_delete_snippet`                      | DELETE `/snippets/{id}`                 | destructive | Delete a snippet                           |
+| `termix_snippets_delete_snippet_folder`               | DELETE `/snippets/folders/{name}`       | destructive | Delete a snippet folder                    |
+| `termix_snippets_execute_snippet_host`                | POST `/snippets/execute`                | write       | Execute a snippet on a host                |
+| `termix_snippets_export_all_snippets_folders_as_json` | GET `/snippets/export`                  | read        | Export all snippets and folders as JSON    |
+| `termix_snippets_get_all_snippet_folders`             | GET `/snippets/folders`                 | read        | Get all snippet folders                    |
+| `termix_snippets_get_all_snippets`                    | GET `/snippets`                         | read        | Get all snippets                           |
+| `termix_snippets_get_specific_snippet`                | GET `/snippets/{id}`                    | read        | Get a specific snippet                     |
+| `termix_snippets_rename_snippet_folder`               | PUT `/snippets/folders/rename`          | write       | Rename a snippet folder                    |
+| `termix_snippets_reorder_snippets`                    | PUT `/snippets/reorder`                 | write       | Reorder snippets                           |
+| `termix_snippets_update_snippet`                      | PUT `/snippets/{id}`                    | write       | Update a snippet                           |
+| `termix_snippets_update_snippet_folder_metadata`      | PUT `/snippets/folders/{name}/metadata` | write       | Update snippet folder metadata             |
+
+## fleets
+
+Grouped multi-host operations: execute, packages, transfer, inventory. Enabled by default: **yes**.
+
+| Tool                                                        | Operation                              | Risk        | Summary                                                                |
+| ----------------------------------------------------------- | -------------------------------------- | ----------- | ---------------------------------------------------------------------- |
+| `termix_fleets_add_host_fleets_static_membership`           | POST `/fleets/{id}/members`            | write       | Add a host to a fleet's static membership                              |
+| `termix_fleets_create_fleet`                                | POST `/fleets`                         | write       | Create a fleet                                                         |
+| `termix_fleets_delete_fleet`                                | DELETE `/fleets/{id}`                  | destructive | Delete a fleet                                                         |
+| `termix_fleets_list_current_users_fleets`                   | GET `/fleets`                          | read        | List the current user's fleets                                         |
+| `termix_fleets_list_resolved_effective_members_fleet`       | GET `/fleets/{id}/members`             | read        | List the resolved effective members of a fleet                         |
+| `termix_fleets_pull_same_remote_path_every_host`            | POST `/fleets/{id}/transfer/pull`      | write       | Pull the same remote path from every host in a fleet                   |
+| `termix_fleets_push_uploaded_file_same_remote_path`         | POST `/fleets/{id}/transfer/push`      | write       | Push an uploaded file to the same remote path on every host in a fleet |
+| `termix_fleets_read_last_known_inventory_snapshot_fleets`   | GET `/fleets/{id}/inventory`           | read        | Read the last-known inventory snapshot for a fleet's members           |
+| `termix_fleets_refresh_inventory_snapshot_every_host_fleet` | POST `/fleets/{id}/inventory`          | write       | Refresh the inventory snapshot for every host in a fleet               |
+| `termix_fleets_remove_host_fleets_static_membership`        | DELETE `/fleets/{id}/members/{hostId}` | destructive | Remove a host from a fleet's static membership                         |
+| `termix_fleets_run_command_across_every_host_fleet`         | POST `/fleets/{id}/execute`            | write       | Run a command across every host in a fleet                             |
+| `termix_fleets_run_package_action_across_every_host`        | POST `/fleets/{id}/packages`           | write       | Run a package action across every host in a fleet                      |
+| `termix_fleets_share_fleets_current_member_hosts_users`     | POST `/fleets/{id}/share`              | write       | Share a fleet's current member hosts with users or roles               |
+| `termix_fleets_update_fleet`                                | PATCH `/fleets/{id}`                   | write       | Update a fleet                                                         |
+
+## metrics
+
+Host status, metrics history, and process/service/TLS/VPN managers. Enabled by default: **yes**.
+
+| Tool                                                            | Operation                                           | Risk        | Summary                                                      |
+| --------------------------------------------------------------- | --------------------------------------------------- | ----------- | ------------------------------------------------------------ |
+| `termix_metrics_bring_wireguard_interface_up_down`              | POST `/host-metrics/managers/wireguard/{id}/action` | write       | Bring a WireGuard interface up or down                       |
+| `termix_metrics_clear_all_ssh_connections`                      | POST `/clear-connections`                           | destructive | Clear all SSH connections                                    |
+| `termix_metrics_complete_totp_verification_metrics`             | POST `/metrics/connect-totp`                        | write       | Complete TOTP verification for metrics                       |
+| `termix_metrics_connect_disconnect_tailscale`                   | POST `/host-metrics/managers/tailscale/{id}/action` | write       | Connect or disconnect Tailscale                              |
+| `termix_metrics_detect_available_management_tooling_host`       | GET `/host-metrics/platform/{id}`                   | read        | Detect available management tooling on a host                |
+| `termix_metrics_get_all_host_statuses`                          | GET `/status`                                       | read        | Get all host statuses                                        |
+| `termix_metrics_get_global_monitoring_defaults`                 | GET `/global-settings`                              | read        | Get global monitoring defaults                               |
+| `termix_metrics_get_historical_metrics_host`                    | GET `/metrics/history/{id}`                         | read        | Get historical metrics for a host                            |
+| `termix_metrics_get_host_metrics`                               | GET `/metrics/{id}`                                 | read        | Get host metrics                                             |
+| `termix_metrics_get_host_metrics_layout_host`                   | GET `/host-metrics/preferences/{id}`                | read        | Get the Host Metrics layout for a host                       |
+| `termix_metrics_get_host_status_id`                             | GET `/status/{id}`                                  | read        | Get host status by ID                                        |
+| `termix_metrics_get_metrics_history_retention_setting`          | GET `/global-settings/history`                      | read        | Get metrics history retention setting                        |
+| `termix_metrics_get_tailscale_status_ips`                       | GET `/host-metrics/managers/tailscale/{id}`         | read        | Get Tailscale status and IPs                                 |
+| `termix_metrics_get_wireguard_interfaces_peers`                 | GET `/host-metrics/managers/wireguard/{id}`         | read        | Get WireGuard interfaces and peers                           |
+| `termix_metrics_list_processes_rich_sortable_filterable_client` | GET `/host-metrics/managers/processes/{id}`         | read        | List processes (rich, sortable, filterable client-side)      |
+| `termix_metrics_list_systemd_services`                          | GET `/host-metrics/managers/services/{id}`          | read        | List systemd services                                        |
+| `termix_metrics_refresh_polling`                                | POST `/refresh`                                     | write       | Refresh polling                                              |
+| `termix_metrics_register_metrics_viewer`                        | POST `/metrics/register-viewer`                     | write       | Register metrics viewer                                      |
+| `termix_metrics_revoke_remove_issued_certificate_certbot_acme`  | POST `/host-metrics/managers/ssl/{id}/revoke`       | destructive | Revoke and remove an issued certificate (certbot or acme.sh) |
+| `termix_metrics_save_host_metrics_layout_host`                  | POST `/host-metrics/preferences/{id}`               | write       | Save the Host Metrics layout for a host                      |
+| `termix_metrics_send_signal_process_term_kill_hup`              | POST `/host-metrics/managers/processes/{id}/signal` | write       | Send a signal to a process (TERM/KILL/HUP/INT)               |
+| `termix_metrics_start_metrics_collection`                       | POST `/metrics/start/{id}`                          | write       | Start metrics collection                                     |
+| `termix_metrics_start_polling_updated_host`                     | POST `/host-updated`                                | write       | Start polling for updated host                               |
+| `termix_metrics_start_stop_restart_enable_disable_systemd`      | POST `/host-metrics/managers/services/{id}/action`  | write       | Start/stop/restart/enable/disable a systemd service          |
+| `termix_metrics_stop_metrics_collection`                        | POST `/metrics/stop/{id}`                           | write       | Stop metrics collection                                      |
+| `termix_metrics_stop_polling_deleted_host`                      | POST `/host-deleted`                                | write       | Stop polling for deleted host                                |
+| `termix_metrics_unregister_metrics_viewer`                      | POST `/metrics/unregister-viewer`                   | write       | Unregister metrics viewer                                    |
+| `termix_metrics_update_global_monitoring_defaults`              | POST `/global-settings`                             | write       | Update global monitoring defaults                            |
+| `termix_metrics_update_metrics_history_retention_setting`       | POST `/global-settings/history`                     | write       | Update metrics history retention setting                     |
+| `termix_metrics_update_viewer_heartbeat`                        | POST `/metrics/heartbeat`                           | write       | Update viewer heartbeat                                      |
+
+## docker
+
+Docker container lifecycle and stats over an SSH-backed session. Enabled by default: **yes**.
+
+| Tool                                             | Operation                                                    | Risk        | Summary                             |
+| ------------------------------------------------ | ------------------------------------------------------------ | ----------- | ----------------------------------- |
+| `termix_docker_check_ssh_session_status`         | GET `/docker/ssh/status`                                     | read        | Check SSH session status            |
+| `termix_docker_complete_warpgate_authentication` | POST `/docker/ssh/connect-warpgate`                          | write       | Complete Warpgate authentication    |
+| `termix_docker_disconnect_ssh_session`           | POST `/docker/ssh/disconnect`                                | write       | Disconnect SSH session              |
+| `termix_docker_establish_ssh_session_docker`     | POST `/docker/ssh/connect`                                   | write       | Establish SSH session for Docker    |
+| `termix_docker_get_container_details`            | GET `/docker/containers/{sessionId}/{containerId}`           | read        | Get container details               |
+| `termix_docker_get_container_logs`               | GET `/docker/containers/{sessionId}/{containerId}/logs`      | read        | Get container logs                  |
+| `termix_docker_get_container_stats`              | GET `/docker/containers/{sessionId}/{containerId}/stats`     | read        | Get container stats                 |
+| `termix_docker_keep_ssh_session_alive`           | POST `/docker/ssh/keepalive`                                 | write       | Keep SSH session alive              |
+| `termix_docker_list_all_containers`              | GET `/docker/containers/{sessionId}`                         | read        | List all containers                 |
+| `termix_docker_pause_container`                  | POST `/docker/containers/{sessionId}/{containerId}/pause`    | write       | Pause container                     |
+| `termix_docker_remove_container`                 | DELETE `/docker/containers/{sessionId}/{containerId}/remove` | destructive | Remove container                    |
+| `termix_docker_restart_container`                | POST `/docker/containers/{sessionId}/{containerId}/restart`  | write       | Restart container                   |
+| `termix_docker_start_container`                  | POST `/docker/containers/{sessionId}/{containerId}/start`    | write       | Start container                     |
+| `termix_docker_stop_container`                   | POST `/docker/containers/{sessionId}/{containerId}/stop`     | write       | Stop container                      |
+| `termix_docker_unpause_container`                | POST `/docker/containers/{sessionId}/{containerId}/unpause`  | write       | Unpause container                   |
+| `termix_docker_validate_docker_availability`     | GET `/docker/validate/{sessionId}`                           | read        | Validate Docker availability        |
+| `termix_docker_verify_totp_complete_connection`  | POST `/docker/ssh/connect-totp`                              | write       | Verify TOTP and complete connection |
+
+## files
+
+Remote file operations over an SSH-backed session, plus bookmarks. Enabled by default: **yes**.
+
+| Tool                                                 | Operation                                       | Risk        | Summary                                   |
+| ---------------------------------------------------- | ----------------------------------------------- | ----------- | ----------------------------------------- |
+| `termix_files_change_file_permissions`               | POST `/ssh/file_manager/ssh/changePermissions`  | write       | Change file permissions                   |
+| `termix_files_complete_warpgate_authentication`      | POST `/ssh/file_manager/ssh/connect-warpgate`   | write       | Complete Warpgate authentication          |
+| `termix_files_compress_files`                        | POST `/ssh/file_manager/ssh/compressFiles`      | write       | Compress files                            |
+| `termix_files_connect_ssh_file_management`           | POST `/ssh/file_manager/ssh/connect`            | write       | Connect to SSH for file management        |
+| `termix_files_copy_file_directory`                   | POST `/ssh/file_manager/ssh/copyItem`           | write       | Copy a file or directory                  |
+| `termix_files_create_file`                           | POST `/ssh/file_manager/ssh/createFile`         | write       | Create a file                             |
+| `termix_files_create_folder`                         | POST `/ssh/file_manager/ssh/createFolder`       | write       | Create a folder                           |
+| `termix_files_delete_file_directory`                 | DELETE `/ssh/file_manager/ssh/deleteItem`       | destructive | Delete a file or directory                |
+| `termix_files_disconnect_ssh`                        | POST `/ssh/file_manager/ssh/disconnect`         | write       | Disconnect from SSH                       |
+| `termix_files_download_file`                         | POST `/ssh/file_manager/ssh/downloadFile`       | write       | Download a file                           |
+| `termix_files_execute_file`                          | POST `/ssh/file_manager/ssh/executeFile`        | write       | Execute a file                            |
+| `termix_files_extract_archive_file`                  | POST `/ssh/file_manager/ssh/extractArchive`     | write       | Extract archive file                      |
+| `termix_files_get_ssh_connection_status`             | GET `/ssh/file_manager/ssh/status`              | read        | Get SSH connection status                 |
+| `termix_files_identify_symbolic_link`                | GET `/ssh/file_manager/ssh/identifySymlink`     | read        | Identify symbolic link                    |
+| `termix_files_keep_ssh_session_alive`                | POST `/ssh/file_manager/ssh/keepalive`          | write       | Keep SSH session alive                    |
+| `termix_files_list_files_directory`                  | GET `/ssh/file_manager/ssh/listFiles`           | read        | List files in a directory                 |
+| `termix_files_move_file_directory`                   | PUT `/ssh/file_manager/ssh/moveItem`            | write       | Move a file or directory                  |
+| `termix_files_read_file`                             | GET `/ssh/file_manager/ssh/readFile`            | read        | Read a file                               |
+| `termix_files_rename_file_directory`                 | PUT `/ssh/file_manager/ssh/renameItem`          | write       | Rename a file or directory                |
+| `termix_files_resolve_path_environment_variables`    | GET `/ssh/file_manager/ssh/resolvePath`         | read        | Resolve a path with environment variables |
+| `termix_files_set_sudo_password_session`             | POST `/ssh/file_manager/sudo-password`          | write       | Set sudo password for session             |
+| `termix_files_stream_download_file`                  | POST `/ssh/file_manager/ssh/downloadFileStream` | write       | Stream-download a file                    |
+| `termix_files_stream_upload_file_via_multipart_form` | POST `/ssh/file_manager/ssh/uploadFileStream`   | write       | Stream-upload a file via multipart form   |
+| `termix_files_upload_file`                           | POST `/ssh/file_manager/ssh/uploadFile`         | write       | Upload a file                             |
+| `termix_files_upload_one_raw_file_chunk`             | POST `/ssh/file_manager/ssh/uploadFileChunk`    | write       | Upload one raw file chunk                 |
+| `termix_files_verify_totp_complete_connection`       | POST `/ssh/file_manager/ssh/connect-totp`       | write       | Verify TOTP and complete connection       |
+| `termix_files_write_file`                            | POST `/ssh/file_manager/ssh/writeFile`          | write       | Write to a file                           |
+
+## tunnels
+
+SSH tunnel connect/status and saved tunnel presets. Enabled by default: **yes**.
+
+| Tool                                         | Operation                             | Risk        | Summary                       |
+| -------------------------------------------- | ------------------------------------- | ----------- | ----------------------------- |
+| `termix_tunnels_cancel_tunnel_retry`         | POST `/ssh/tunnel/cancel`             | write       | Cancel tunnel retry           |
+| `termix_tunnels_connect_ssh_tunnel`          | POST `/ssh/tunnel/connect`            | write       | Connect SSH tunnel            |
+| `termix_tunnels_create_client_tunnel_preset` | POST `/c2s-tunnel-presets`            | write       | Create a client tunnel preset |
+| `termix_tunnels_delete_client_tunnel_preset` | DELETE `/c2s-tunnel-presets/{id}`     | destructive | Delete a client tunnel preset |
+| `termix_tunnels_disconnect_ssh_tunnel`       | POST `/ssh/tunnel/disconnect`         | write       | Disconnect SSH tunnel         |
+| `termix_tunnels_get_all_tunnel_statuses`     | GET `/ssh/tunnel/status`              | read        | Get all tunnel statuses       |
+| `termix_tunnels_get_tunnel_status_name`      | GET `/ssh/tunnel/status/{tunnelName}` | read        | Get tunnel status by name     |
+| `termix_tunnels_list_client_tunnel_presets`  | GET `/c2s-tunnel-presets`             | read        | List client tunnel presets    |
+| `termix_tunnels_update_client_tunnel_preset` | PUT `/c2s-tunnel-presets/{id}`        | write       | Update a client tunnel preset |
+
+## automations
+
+Scheduled and webhook-triggered automations. Enabled by default: **yes**.
+
+| Tool                                                    | Operation                             | Risk        | Summary                                       |
+| ------------------------------------------------------- | ------------------------------------- | ----------- | --------------------------------------------- |
+| `termix_automations_create_automation`                  | POST `/automations`                   | write       | Create an automation                          |
+| `termix_automations_delete_automation`                  | DELETE `/automations/{id}`            | destructive | Delete an automation                          |
+| `termix_automations_fetch_single_automation`            | GET `/automations/{id}`               | read        | Fetch a single automation                     |
+| `termix_automations_list_automation_runs`               | GET `/automations/runs`               | read        | List automation runs                          |
+| `termix_automations_list_current_users_automations`     | GET `/automations`                    | read        | List the current user's automations           |
+| `termix_automations_run_automation_now`                 | POST `/automations/{id}/run`          | write       | Run an automation now                         |
+| `termix_automations_step_step_results_run`              | GET `/automations/runs/{runId}/steps` | read        | Step-by-step results for a run                |
+| `termix_automations_trigger_automation_external_system` | POST `/automations/webhook/{token}`   | write       | Trigger an automation from an external system |
+| `termix_automations_update_automation`                  | PUT `/automations/{id}`               | write       | Update an automation                          |
+
+## alerts
+
+Alert rules, notification channels, and firings. Enabled by default: **yes**.
+
+| Tool                                                       | Operation                               | Risk        | Summary                                            |
+| ---------------------------------------------------------- | --------------------------------------- | ----------- | -------------------------------------------------- |
+| `termix_alerts_acknowledge_alert_firing`                   | POST `/alert-firings/{id}/acknowledge`  | write       | Acknowledge an alert firing                        |
+| `termix_alerts_acknowledge_all_alert_firings_current_user` | POST `/alert-firings/acknowledge-all`   | write       | Acknowledge all alert firings for the current user |
+| `termix_alerts_create_alert_rule`                          | POST `/alert-rules`                     | write       | Create an alert rule                               |
+| `termix_alerts_create_notification_channel`                | POST `/notification-channels`           | write       | Create a notification channel                      |
+| `termix_alerts_delete_alert_rule`                          | DELETE `/alert-rules/{id}`              | destructive | Delete an alert rule                               |
+| `termix_alerts_delete_notification_channel`                | DELETE `/notification-channels/{id}`    | destructive | Delete a notification channel                      |
+| `termix_alerts_dismiss_alert`                              | POST `/alerts/dismiss`                  | write       | Dismiss an alert                                   |
+| `termix_alerts_get_active_alerts`                          | GET `/alerts`                           | read        | Get active alerts                                  |
+| `termix_alerts_get_dismissed_alerts`                       | GET `/alerts/dismissed`                 | read        | Get dismissed alerts                               |
+| `termix_alerts_list_alert_firings_current_user`            | GET `/alert-firings`                    | read        | List alert firings for the current user            |
+| `termix_alerts_list_alert_rules_current_user`              | GET `/alert-rules`                      | read        | List alert rules for the current user              |
+| `termix_alerts_list_notification_channels_current_user`    | GET `/notification-channels`            | read        | List notification channels for the current user    |
+| `termix_alerts_send_test_notification`                     | POST `/notification-channels/{id}/test` | write       | Send a test notification                           |
+| `termix_alerts_undismiss_alert`                            | DELETE `/alerts/dismiss`                | destructive | Undismiss an alert                                 |
+| `termix_alerts_update_alert_rule`                          | PUT `/alert-rules/{id}`                 | write       | Update an alert rule                               |
+| `termix_alerts_update_notification_channel`                | PUT `/notification-channels/{id}`       | write       | Update a notification channel                      |
+
+## audit
+
+Audit log querying and export. Enabled by default: **yes**.
+
+| Tool                                                | Operation                 | Risk | Summary                              |
+| --------------------------------------------------- | ------------------------- | ---- | ------------------------------------ |
+| `termix_audit_export_audit_logs`                    | GET `/audit-logs/export`  | read | Export audit logs                    |
+| `termix_audit_list_audit_logs`                      | GET `/audit-logs`         | read | List audit logs                      |
+| `termix_audit_list_distinct_audit_log_action_types` | GET `/audit-logs/actions` | read | List distinct audit log action types |
+
+## session-logs
+
+Recorded terminal session metadata and content. Enabled by default: **yes**.
+
+| Tool                                           | Operation                        | Risk        | Summary                  |
+| ---------------------------------------------- | -------------------------------- | ----------- | ------------------------ |
+| `termix_session_logs_delete_session_log`       | DELETE `/session_logs/{id}`      | destructive | Delete session log       |
+| `termix_session_logs_get_session_log_content`  | GET `/session_logs/{id}/content` | read        | Get session log content  |
+| `termix_session_logs_get_session_log_metadata` | GET `/session_logs/{id}`         | read        | Get session log metadata |
+| `termix_session_logs_list_session_logs`        | GET `/session_logs`              | read        | List session logs        |
+
+## proxmox
+
+Proxmox host discovery and node/VM statistics. Enabled by default: **yes**.
+
+| Tool                                                    | Operation                             | Risk  | Summary                                      |
+| ------------------------------------------------------- | ------------------------------------- | ----- | -------------------------------------------- |
+| `termix_proxmox_discover_proxmox_guests_node`           | POST `/proxmox/discover`              | write | Discover Proxmox guests on a node            |
+| `termix_proxmox_get_cached_proxmox_node_stats_host`     | GET `/proxmox-stats/{id}`             | read  | Get cached Proxmox node stats for a host     |
+| `termix_proxmox_get_historical_proxmox_node_stats_host` | GET `/proxmox-stats/history/{hostId}` | read  | Get historical Proxmox node stats for a host |
+| `termix_proxmox_start_proxmox_stats_collection`         | POST `/proxmox-stats/start/{id}`      | write | Start Proxmox stats collection               |
+| `termix_proxmox_stop_proxmox_stats_collection`          | POST `/proxmox-stats/stop/{id}`       | write | Stop Proxmox stats collection                |
+
+## tailscale
+
+Tailscale device listing. Enabled by default: **yes**.
+
+| Tool                                      | Operation                | Risk | Summary                |
+| ----------------------------------------- | ------------------------ | ---- | ---------------------- |
+| `termix_tailscale_list_tailscale_devices` | GET `/tailscale/devices` | read | List Tailscale devices |
+
+## terminal-history
+
+Per-host terminal command history. Enabled by default: **yes**.
+
+| Tool                                                          | Operation                                   | Risk        | Summary                                |
+| ------------------------------------------------------------- | ------------------------------------------- | ----------- | -------------------------------------- |
+| `termix_terminal_history_clear_command_history`               | DELETE `/terminal/command_history/{hostId}` | destructive | Clear command history                  |
+| `termix_terminal_history_delete_specific_command_history`     | POST `/terminal/command_history/delete`     | write       | Delete a specific command from history |
+| `termix_terminal_history_get_command_history`                 | GET `/terminal/command_history/{hostId}`    | read        | Get command history                    |
+| `termix_terminal_history_get_session_persistence_settings`    | GET `/terminal/session_settings`            | read        | Get session persistence settings       |
+| `termix_terminal_history_save_command_history`                | POST `/terminal/command_history`            | write       | Save command to history                |
+| `termix_terminal_history_update_session_persistence_settings` | POST `/terminal/session_settings`           | write       | Update session persistence settings    |
+
+## network-topology
+
+Saved network topology diagrams. Enabled by default: **no**.
+
+| Tool                                                               | Operation                | Risk  | Summary                                      |
+| ------------------------------------------------------------------ | ------------------------ | ----- | -------------------------------------------- |
+| `termix_network_topology_get_network_topology_authenticated_user`  | GET `/network-topology`  | read  | Get network topology for authenticated user  |
+| `termix_network_topology_save_network_topology_authenticated_user` | POST `/network-topology` | write | Save network topology for authenticated user |
+
+## termix-id
+
+Built-in SSH certificate authority and issued keys. Enabled by default: **no**.
+
+| Tool                                                        | Operation                               | Risk        | Summary                                                                   |
+| ----------------------------------------------------------- | --------------------------------------- | ----------- | ------------------------------------------------------------------------- |
+| `termix_id_check_if_handle_is_available`                    | GET `/termix-id/check/{handle}`         | read        | Check if a handle is available                                            |
+| `termix_id_create_certificate_authority`                    | POST `/termix-id/ca`                    | write       | Create a certificate authority                                            |
+| `termix_id_create_termix_id`                                | POST `/termix-id`                       | write       | Create a Termix ID                                                        |
+| `termix_id_delete_certificate_authority`                    | DELETE `/termix-id/ca`                  | destructive | Delete the certificate authority                                          |
+| `termix_id_delete_termix_id_all_associated_keys`            | DELETE `/termix-id`                     | destructive | Delete Termix ID and all associated keys                                  |
+| `termix_id_generate_new_key_pair_publish_public`            | POST `/termix-id/keys/generate`         | write       | Generate a new key pair and publish the public key                        |
+| `termix_id_get_credential_ids_have_at_least`                | GET `/termix-id/linked-credentials`     | read        | Get credential IDs that have at least one enabled published Termix ID key |
+| `termix_id_get_current_users_certificate_authority`         | GET `/termix-id/ca`                     | read        | Get current user's certificate authority                                  |
+| `termix_id_get_current_users_termix_id_keys`                | GET `/termix-id/me`                     | read        | Get current user's Termix ID and keys                                     |
+| `termix_id_issue_ssh_certificate_key_ed25519_only`          | POST `/termix-id/keys/{id}/certificate` | write       | Issue an SSH certificate for a key (ed25519 only)                         |
+| `termix_id_publish_public_key`                              | POST `/termix-id/keys`                  | write       | Publish a public key                                                      |
+| `termix_id_revoke_delete_published_key`                     | DELETE `/termix-id/keys/{id}`           | destructive | Revoke and delete a published key                                         |
+| `termix_id_rotate_certificate_authority_revokes_all_issued` | POST `/termix-id/ca/rotate`             | destructive | Rotate the certificate authority (revokes all issued certificates)        |
+| `termix_id_update_key_metadata_enabled_state_label`         | PATCH `/termix-id/keys/{id}`            | write       | Update key metadata (enabled state or label)                              |
+| `termix_id_update_termix_id_handle_description`             | PUT `/termix-id`                        | write       | Update Termix ID handle or description                                    |
+
+## vault
+
+HashiCorp Vault SSH signing profiles. Enabled by default: **no**.
+
+| Tool                                | Operation                     | Risk                                 | Summary                |
+| ----------------------------------- | ----------------------------- | ------------------------------------ | ---------------------- |
+| `termix_vault_create_vault_profile` | POST `/vault/profiles`        | write                                | Create a Vault profile |
+| `termix_vault_delete_vault_profile` | DELETE `/vault/profiles/{id}` | destructive                          | Delete a Vault profile |
+| `termix_vault_list_vault_profiles`  | GET `/vault/profiles`         | read                                 | List Vault profiles    |
+| `termix_vault_update_vault_profile` | PUT `/vault/profiles/{id}`    | write                                | Update a Vault profile |
+| `termix_vault_vault_oidc_callback`  | GET `/vault/oidc/callback`    | not exposed - OAuth browser callback | Vault OIDC callback    |
+
+## session-sharing
+
+Live terminal session collaboration links. Enabled by default: **no**.
+
+| Tool                                                             | Operation                                   | Risk        | Summary                                        |
+| ---------------------------------------------------------------- | ------------------------------------------- | ----------- | ---------------------------------------------- |
+| `termix_session_sharing_create_session_share_link_targeted_user` | POST `/session-sharing/create`              | write       | Create a session share (link or targeted user) |
+| `termix_session_sharing_end_shared_session_all_participants`     | POST `/session-sharing/{shareId}/end`       | write       | End a shared session for all participants      |
+| `termix_session_sharing_list_active_session_shares_host`         | GET `/session-sharing/host/{hostId}/active` | read        | List active session shares for a host          |
+| `termix_session_sharing_resolve_guest_share_link`                | GET `/session-sharing/resolve/{linkToken}`  | read        | Resolve a guest share link                     |
+| `termix_session_sharing_revoke_session_share`                    | DELETE `/session-sharing/{shareId}`         | destructive | Revoke a session share                         |
+
+## guacamole
+
+RDP/VNC/Telnet connection token generation. Enabled by default: **no**.
+
+| Tool                                                                      | Operation                               | Risk   | Summary                                                     |
+| ------------------------------------------------------------------------- | --------------------------------------- | ------ | ----------------------------------------------------------- |
+| `termix_guacamole_generate_encrypted_guacamole_connection_token`          | POST `/guacamole/token`                 | secret | Generate an encrypted Guacamole connection token            |
+| `termix_guacamole_generate_guacamole_connection_token_host_configuration` | POST `/guacamole/connect-host/{hostId}` | secret | Generate Guacamole connection token from host configuration |
+
+## admin
+
+User management, RBAC, API keys, SSO, and instance settings. Enabled by default: **no**.
+
+| Tool                                                            | Operation                                          | Risk                                                                                | Summary                                                                  |
+| --------------------------------------------------------------- | -------------------------------------------------- | ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `termix_admin_admin_create_user`                                | POST `/users/admin-create`                         | write                                                                               | Admin create user                                                        |
+| `termix_admin_assign_role_user`                                 | POST `/rbac/users/{userId}/roles`                  | write                                                                               | Assign a role to a user                                                  |
+| `termix_admin_complete_password_reset`                          | POST `/users/complete-reset`                       | not exposed - email-based password reset flow                                       | Complete password reset                                                  |
+| `termix_admin_configure_oidc_provider`                          | POST `/users/oidc-config`                          | write                                                                               | Configure OIDC provider                                                  |
+| `termix_admin_count_users`                                      | GET `/users/count`                                 | read                                                                                | Count users                                                              |
+| `termix_admin_create_api_key_admin_only`                        | POST `/users/api-keys`                             | write                                                                               | Create an API key (admin only)                                           |
+| `termix_admin_create_new_role`                                  | POST `/rbac/roles`                                 | write                                                                               | Create a new role                                                        |
+| `termix_admin_create_new_user`                                  | POST `/users/create`                               | write                                                                               | Create a new user                                                        |
+| `termix_admin_create_sso_provider`                              | POST `/users/sso-providers`                        | write                                                                               | Create SSO provider                                                      |
+| `termix_admin_database_health_check`                            | GET `/users/db-health`                             | read                                                                                | Database health check                                                    |
+| `termix_admin_delete_api_key_admin_only`                        | DELETE `/users/api-keys/{keyId}`                   | destructive                                                                         | Delete an API key (admin only)                                           |
+| `termix_admin_delete_role`                                      | DELETE `/rbac/roles/{id}`                          | destructive                                                                         | Delete a role                                                            |
+| `termix_admin_delete_sso_provider`                              | DELETE `/users/sso-providers/{id}`                 | destructive                                                                         | Delete SSO provider                                                      |
+| `termix_admin_delete_user_admin_only`                           | DELETE `/users/delete-user`                        | destructive                                                                         | Delete user (admin only)                                                 |
+| `termix_admin_disable_oidc_configuration`                       | DELETE `/users/oidc-config`                        | destructive                                                                         | Disable OIDC configuration                                               |
+| `termix_admin_disable_totp`                                     | POST `/users/totp/disable`                         | not exposed - needs a real-time TOTP code from the user's own authenticator         | Disable TOTP                                                             |
+| `termix_admin_disable_users_totp_admin_only`                    | POST `/users/admin/totp/disable`                   | destructive                                                                         | Disable a user's TOTP (admin only)                                       |
+| `termix_admin_enable_totp`                                      | POST `/users/totp/enable`                          | not exposed - live TOTP enrollment ceremony (needs a real-time code)                | Enable TOTP                                                              |
+| `termix_admin_export_users_data_admin_only`                     | GET `/users/admin/export/{userId}`                 | read                                                                                | Export a user's data (admin only)                                        |
+| `termix_admin_generate_new_backup_codes`                        | POST `/users/totp/backup-codes`                    | not exposed - tied to an active browser session's TOTP re-verification              | Generate new backup codes                                                |
+| `termix_admin_get_acme_ssl_settings`                            | GET `/users/acme-ssl-settings`                     | read                                                                                | Get ACME SSL settings                                                    |
+| `termix_admin_get_all_roles`                                    | GET `/rbac/roles`                                  | read                                                                                | Get all roles                                                            |
+| `termix_admin_get_allowlist_private_ai_endpoint_hosts`          | GET `/users/ai-private-endpoints`                  | read                                                                                | Get the allowlist of private AI endpoint hosts                           |
+| `termix_admin_get_analytics_enabled_setting`                    | GET `/users/analytics-enabled`                     | read                                                                                | Get analytics enabled setting                                            |
+| `termix_admin_get_command_history_enabled_setting`              | GET `/users/command-history-enabled`               | read                                                                                | Get command history enabled setting                                      |
+| `termix_admin_get_current_recipients_shared_host_protocol`      | GET `/rbac/host-access/{hostId}/auth/{protocol}`   | read                                                                                | Get the current recipient's shared-host protocol authentication override |
+| `termix_admin_get_guacamole_settings`                           | GET `/users/guacamole-settings`                    | read                                                                                | Get Guacamole settings                                                   |
+| `termix_admin_get_host_access_list`                             | GET `/rbac/host/{id}/access`                       | read                                                                                | Get host access list                                                     |
+| `termix_admin_get_host_creation_defaults`                       | GET `/users/host-defaults`                         | read                                                                                | Get host creation defaults                                               |
+| `termix_admin_get_log_level_setting`                            | GET `/users/log-level`                             | read                                                                                | Get log level setting                                                    |
+| `termix_admin_get_oidc_authorization_url`                       | GET `/users/oidc/authorize`                        | not exposed - browser OAuth redirect, not callable as a tool                        | Get OIDC authorization URL                                               |
+| `termix_admin_get_oidc_configuration`                           | GET `/users/oidc-config`                           | read                                                                                | Get OIDC configuration                                                   |
+| `termix_admin_get_oidc_configuration_admin`                     | GET `/users/oidc-config/admin`                     | read                                                                                | Get OIDC configuration for admin                                         |
+| `termix_admin_get_oidc_silent_login_default_setting`            | GET `/users/oidc-silent-login-default`             | read                                                                                | Get OIDC silent login default setting                                    |
+| `termix_admin_get_password_login_status`                        | GET `/users/password-login-allowed`                | read                                                                                | Get password login status                                                |
+| `termix_admin_get_password_reset_status`                        | GET `/users/password-reset-allowed`                | read                                                                                | Get password reset status                                                |
+| `termix_admin_get_registration_status`                          | GET `/users/registration-allowed`                  | read                                                                                | Get registration status                                                  |
+| `termix_admin_get_role_permissions_catalog`                     | GET `/rbac/permissions/catalog`                    | read                                                                                | Get the role permissions catalog                                         |
+| `termix_admin_get_session_sharing_globally_enabled_setting`     | GET `/users/session-sharing-enabled`               | read                                                                                | Get session sharing globally enabled setting                             |
+| `termix_admin_get_session_timeout_setting`                      | GET `/users/session-timeout`                       | read                                                                                | Get session timeout setting                                              |
+| `termix_admin_get_shared_hosts`                                 | GET `/rbac/shared-hosts`                           | read                                                                                | Get shared hosts                                                         |
+| `termix_admin_get_shared_snippets`                              | GET `/rbac/shared-snippets`                        | read                                                                                | Get shared snippets                                                      |
+| `termix_admin_get_snippet_access_list`                          | GET `/rbac/snippet/{id}/access`                    | read                                                                                | Get snippet access list                                                  |
+| `termix_admin_get_tailscale_settings`                           | GET `/users/tailscale-settings`                    | read                                                                                | Get Tailscale settings                                                   |
+| `termix_admin_get_terminal_image_storage_settings_admin`        | GET `/users/terminal-image-storage-settings`       | read                                                                                | Get terminal image storage settings (admin only)                         |
+| `termix_admin_get_users_roles`                                  | GET `/rbac/users/{userId}/roles`                   | read                                                                                | Get user's roles                                                         |
+| `termix_admin_get_whether_ai_assistant_is_enabled`              | GET `/users/ai-enabled`                            | read                                                                                | Get whether the AI assistant is enabled instance-wide                    |
+| `termix_admin_initiate_password_reset`                          | POST `/users/initiate-reset`                       | not exposed - email-based password reset flow                                       | Initiate password reset                                                  |
+| `termix_admin_ldap_login`                                       | POST `/users/ldap/login`                           | not exposed - interactive LDAP login ceremony                                       | LDAP login                                                               |
+| `termix_admin_list_all_api_keys_admin_only`                     | GET `/users/api-keys`                              | read                                                                                | List all API keys (admin only)                                           |
+| `termix_admin_list_all_sso_providers_admin`                     | GET `/users/sso-providers/admin`                   | read                                                                                | List all SSO providers (admin)                                           |
+| `termix_admin_list_enabled_sso_providers_public`                | GET `/users/sso-providers`                         | read                                                                                | List enabled SSO providers (public)                                      |
+| `termix_admin_list_users`                                       | GET `/users/list`                                  | read                                                                                | List users                                                               |
+| `termix_admin_make_user_admin`                                  | POST `/users/make-admin`                           | write                                                                               | Make user admin                                                          |
+| `termix_admin_mint_session_sole_local_desktop_user`             | POST `/users/internal/auto-session`                | not exposed - desktop-only local bootstrap, not applicable via a user API key       | Mint a session for the sole local desktop user                           |
+| `termix_admin_oidc_callback`                                    | GET `/users/oidc/callback`                         | not exposed - browser OAuth redirect, not callable as a tool                        | OIDC callback                                                            |
+| `termix_admin_remove_admin_status`                              | POST `/users/remove-admin`                         | write                                                                               | Remove admin status                                                      |
+| `termix_admin_remove_role_user`                                 | DELETE `/rbac/users/{userId}/roles/{roleId}`       | destructive                                                                         | Remove a role from a user                                                |
+| `termix_admin_replace_allowlist_private_ai_endpoint_hosts`      | PATCH `/users/ai-private-endpoints`                | write                                                                               | Replace the allowlist of private AI endpoint hosts (admin only)          |
+| `termix_admin_request_renew_lets_encrypt_certificate_admin`     | POST `/users/acme-ssl-request`                     | write                                                                               | Request or renew Let's Encrypt certificate (admin only)                  |
+| `termix_admin_reset_users_password_admin_only`                  | POST `/users/admin/reset-password`                 | secret                                                                              | Reset a user's password (admin only)                                     |
+| `termix_admin_revoke_host_access`                               | DELETE `/rbac/host/{id}/access/{accessId}`         | destructive                                                                         | Revoke host access                                                       |
+| `termix_admin_revoke_snippet_access`                            | DELETE `/rbac/snippet/{id}/access/{accessId}`      | destructive                                                                         | Revoke snippet access                                                    |
+| `termix_admin_set_oidc_silent_login_default_setting`            | PATCH `/users/oidc-silent-login-default`           | write                                                                               | Set OIDC silent login default setting                                    |
+| `termix_admin_set_password_login_status`                        | PATCH `/users/password-login-allowed`              | write                                                                               | Set password login status                                                |
+| `termix_admin_set_password_reset_status`                        | PATCH `/users/password-reset-allowed`              | destructive                                                                         | Set password reset status                                                |
+| `termix_admin_set_personal_authentication_shared_host_protocol` | PUT `/rbac/host-access/{hostId}/auth/{protocol}`   | write                                                                               | Set personal authentication for a shared host protocol                   |
+| `termix_admin_set_registration_status`                          | PATCH `/users/registration-allowed`                | write                                                                               | Set registration status                                                  |
+| `termix_admin_setup_totp`                                       | POST `/users/totp/setup`                           | not exposed - live TOTP enrollment ceremony (needs an authenticator app)            | Setup TOTP                                                               |
+| `termix_admin_share_all_hosts_folder`                           | POST `/rbac/folder/share`                          | write                                                                               | Share all hosts in a folder                                              |
+| `termix_admin_share_host`                                       | POST `/rbac/host/{id}/share`                       | write                                                                               | Share a host                                                             |
+| `termix_admin_share_snippet`                                    | POST `/rbac/snippet/{id}/share`                    | write                                                                               | Share a snippet                                                          |
+| `termix_admin_test_image_storage_visibility_admin_only`         | POST `/users/terminal-image-storage-settings/test` | write                                                                               | Test image storage visibility (admin only)                               |
+| `termix_admin_update_acme_ssl_settings_admin_only`              | PATCH `/users/acme-ssl-settings`                   | write                                                                               | Update ACME SSL settings (admin only)                                    |
+| `termix_admin_update_analytics_enabled_setting_admin_only`      | PATCH `/users/analytics-enabled`                   | write                                                                               | Update analytics enabled setting (admin only)                            |
+| `termix_admin_update_command_history_enabled_setting_admin`     | PATCH `/users/command-history-enabled`             | write                                                                               | Update command history enabled setting (admin only)                      |
+| `termix_admin_update_guacamole_settings`                        | PATCH `/users/guacamole-settings`                  | write                                                                               | Update Guacamole settings                                                |
+| `termix_admin_update_host_access_grant`                         | PATCH `/rbac/host/{id}/access/{accessId}`          | write                                                                               | Update a host access grant                                               |
+| `termix_admin_update_host_creation_defaults_admin_only`         | PATCH `/users/host-defaults`                       | write                                                                               | Update host creation defaults (admin only)                               |
+| `termix_admin_update_instance_wide_ai_assistant_setting`        | PATCH `/users/ai-enabled`                          | write                                                                               | Update the instance-wide AI assistant setting (admin only)               |
+| `termix_admin_update_log_level_setting_admin_only`              | PATCH `/users/log-level`                           | write                                                                               | Update log level setting (admin only)                                    |
+| `termix_admin_update_role`                                      | PUT `/rbac/roles/{id}`                             | write                                                                               | Update a role                                                            |
+| `termix_admin_update_session_sharing_globally_enabled_setting`  | PATCH `/users/session-sharing-enabled`             | write                                                                               | Update session sharing globally enabled setting (admin only)             |
+| `termix_admin_update_session_timeout_setting_admin_only`        | PATCH `/users/session-timeout`                     | write                                                                               | Update session timeout setting (admin only)                              |
+| `termix_admin_update_sso_provider`                              | PUT `/users/sso-providers/{id}`                    | write                                                                               | Update SSO provider                                                      |
+| `termix_admin_update_tailscale_settings_admin_only`             | PATCH `/users/tailscale-settings`                  | write                                                                               | Update Tailscale settings (admin only)                                   |
+| `termix_admin_update_terminal_image_storage_settings_admin`     | PATCH `/users/terminal-image-storage-settings`     | write                                                                               | Update terminal image storage settings (admin only)                      |
+| `termix_admin_upload_manual_custom_ssl_certificate_key`         | POST `/users/manual-ssl-upload`                    | write                                                                               | Upload a manual/custom SSL certificate and key (admin only)              |
+| `termix_admin_user_login`                                       | POST `/users/login`                                | not exposed - interactive password login; termix-mcp authenticates via API key only | User login                                                               |
+| `termix_admin_user_logout`                                      | POST `/users/logout`                               | not exposed - session-based logout; irrelevant when authenticating via API key      | User logout                                                              |
+| `termix_admin_verify_reset_code`                                | POST `/users/verify-reset-code`                    | not exposed - email-based password reset flow                                       | Verify reset code                                                        |
+| `termix_admin_verify_totp_during_login`                         | POST `/users/totp/verify-login`                    | not exposed - live TOTP login ceremony                                              | Verify TOTP during login                                                 |
+
+## account
+
+The API key's own user profile and preferences. Enabled by default: **no**.
+
+| Tool                                                         | Operation                                           | Risk                                                                   | Summary                                         |
+| ------------------------------------------------------------ | --------------------------------------------------- | ---------------------------------------------------------------------- | ----------------------------------------------- |
+| `termix_account_change_user_password`                        | POST `/users/change-password`                       | write                                                                  | Change user password                            |
+| `termix_account_check_user_data_unlock_status`               | GET `/users/data-status`                            | read                                                                   | Check user data unlock status                   |
+| `termix_account_delete_passkey`                              | DELETE `/users/webauthn/credentials/{credentialId}` | destructive                                                            | Delete a passkey                                |
+| `termix_account_delete_user_account`                         | DELETE `/users/delete-account`                      | destructive                                                            | Delete user account                             |
+| `termix_account_finish_passkey_login`                        | POST `/users/webauthn/authenticate/verify`          | not exposed - live WebAuthn ceremony, requires a browser authenticator | Finish passkey login                            |
+| `termix_account_finish_passkey_registration`                 | POST `/users/webauthn/register/verify`              | not exposed - live WebAuthn ceremony, requires a browser authenticator | Finish passkey registration                     |
+| `termix_account_get_current_session_token`                   | GET `/users/me/token`                               | read                                                                   | Get current session token                       |
+| `termix_account_get_current_users_info`                      | GET `/users/me`                                     | read                                                                   | Get current user's info                         |
+| `termix_account_get_preferences_current_user`                | GET `/user-preferences`                             | read                                                                   | Get preferences for the current user            |
+| `termix_account_get_sessions`                                | GET `/users/sessions`                               | read                                                                   | Get sessions                                    |
+| `termix_account_link_oidc_user_password_account`             | POST `/users/link-oidc-to-password`                 | write                                                                  | Link OIDC user to password account              |
+| `termix_account_list_passkeys`                               | GET `/users/webauthn/credentials`                   | read                                                                   | List passkeys                                   |
+| `termix_account_permanently_dismiss_donation_reminder_modal` | POST `/users/me/dismiss-donation-modal`             | write                                                                  | Permanently dismiss the donation reminder modal |
+| `termix_account_revoke_all_sessions_user`                    | POST `/users/sessions/revoke-all`                   | destructive                                                            | Revoke all sessions for a user                  |
+| `termix_account_revoke_specific_session`                     | DELETE `/users/sessions/{sessionId}`                | destructive                                                            | Revoke a specific session                       |
+| `termix_account_start_passkey_login`                         | POST `/users/webauthn/authenticate/options`         | not exposed - live WebAuthn ceremony, requires a browser authenticator | Start passkey login                             |
+| `termix_account_start_passkey_registration`                  | POST `/users/webauthn/register/options`             | not exposed - live WebAuthn ceremony, requires a browser authenticator | Start passkey registration                      |
+| `termix_account_unlink_oidc_password_account`                | POST `/users/unlink-oidc-from-password`             | write                                                                  | Unlink OIDC from password account               |
+| `termix_account_unlock_user_data`                            | POST `/users/unlock-data`                           | write                                                                  | Unlock user data                                |
+| `termix_account_update_preferences_current_user`             | PUT `/user-preferences`                             | write                                                                  | Update preferences for the current user         |
+
+## ui-state
+
+Workspaces, open tabs, and UI/sidebar display preferences. Enabled by default: **no**.
+
+| Tool                                                                 | Operation                             | Risk        | Summary                                                          |
+| -------------------------------------------------------------------- | ------------------------------------- | ----------- | ---------------------------------------------------------------- |
+| `termix_ui_state_bulk_replace_all_open_tabs_current`                 | PUT `/open-tabs`                      | write       | Bulk replace all open tabs for the current user                  |
+| `termix_ui_state_delete_single_open_tab`                             | DELETE `/open-tabs/{id}`              | destructive | Delete a single open tab                                         |
+| `termix_ui_state_delete_workspace`                                   | DELETE `/workspaces/{id}`             | destructive | Delete a workspace                                               |
+| `termix_ui_state_duplicate_workspaces_content_color_icon_under`      | POST `/workspaces/{id}/duplicate`     | write       | Duplicate a workspace's content and color/icon under a new name  |
+| `termix_ui_state_fetch_auto_maintained_last_session_workspace`       | GET `/workspaces/last-session`        | read        | Fetch the auto-maintained "Last Session" workspace               |
+| `termix_ui_state_fetch_workspace_apply_mark_it_as`                   | POST `/workspaces/{id}/apply`         | write       | Fetch a workspace to apply and mark it as just used              |
+| `termix_ui_state_get_all_active_backend_sessions_current`            | GET `/open-tabs/active-sessions`      | read        | Get all active backend sessions for the current user             |
+| `termix_ui_state_get_all_open_tabs_current_user`                     | GET `/open-tabs`                      | read        | Get all open tabs for the current user                           |
+| `termix_ui_state_get_credential_sidebar_preferences_current_user`    | GET `/credential-sidebar/preferences` | read        | Get the credential sidebar preferences for the current user      |
+| `termix_ui_state_get_host_sidebar_preferences_current_user`          | GET `/host-sidebar/preferences`       | read        | Get the host sidebar preferences for the current user            |
+| `termix_ui_state_get_ui_complexity_preferences_current_user`         | GET `/ui-preferences`                 | read        | Get the UI complexity preferences for the current user           |
+| `termix_ui_state_list_current_users_saved_workspaces`                | GET `/workspaces`                     | read        | List the current user's saved workspaces                         |
+| `termix_ui_state_mark_workspace_as_restore_login_default`            | POST `/workspaces/{id}/set-default`   | write       | Mark a workspace as the restore-on-login default                 |
+| `termix_ui_state_overwrite_workspaces_saved_tab_arrangement_new`     | PUT `/workspaces/{id}/content`        | write       | Overwrite a workspace's saved tab arrangement with a new payload |
+| `termix_ui_state_remove_workspace_as_restore_login_default`          | POST `/workspaces/{id}/unset-default` | write       | Remove a workspace as the restore-on-login default               |
+| `termix_ui_state_rename_recolor_workspace`                           | PATCH `/workspaces/{id}`              | write       | Rename or recolor a workspace                                    |
+| `termix_ui_state_save_current_tab_arrangement_as_new`                | POST `/workspaces`                    | write       | Save the current tab arrangement as a new named workspace        |
+| `termix_ui_state_update_credential_sidebar_preferences_current_user` | PUT `/credential-sidebar/preferences` | write       | Update the credential sidebar preferences for the current user   |
+| `termix_ui_state_update_host_sidebar_preferences_current_user`       | PUT `/host-sidebar/preferences`       | write       | Update the host sidebar preferences for the current user         |
+| `termix_ui_state_update_single_open_tab`                             | PATCH `/open-tabs/{id}`               | write       | Update a single open tab                                         |
+| `termix_ui_state_update_ui_complexity_preferences_current_user`      | PUT `/ui-preferences`                 | write       | Update the UI complexity preferences for the current user        |
+| `termix_ui_state_upsert_auto_maintained_last_session_workspace`      | PUT `/workspaces/last-session`        | write       | Upsert the auto-maintained "Last Session" workspace              |
+| `termix_ui_state_upsert_single_open_tab_current_user`                | POST `/open-tabs`                     | write       | Upsert a single open tab for the current user                    |
+
+## homepage
+
+Homepage service links, layout, and dashboard activity. Enabled by default: **no**.
+
+| Tool                                                  | Operation                     | Risk        | Summary                                             |
+| ----------------------------------------------------- | ----------------------------- | ----------- | --------------------------------------------------- |
+| `termix_homepage_check_http_reachability_latency_url` | GET `/homepage/ping`          | read        | Check the HTTP reachability and latency of a URL    |
+| `termix_homepage_create_homepage_item`                | POST `/homepage/items`        | write       | Create homepage item                                |
+| `termix_homepage_create_service_link`                 | POST `/service-links`         | write       | Create service link                                 |
+| `termix_homepage_delete_homepage_item`                | DELETE `/homepage/items/{id}` | destructive | Delete homepage item                                |
+| `termix_homepage_delete_service_link`                 | DELETE `/service-links/{id}`  | destructive | Delete service link                                 |
+| `termix_homepage_get_homepage_items`                  | GET `/homepage/items`         | read        | Get homepage items                                  |
+| `termix_homepage_get_homepage_layout`                 | GET `/homepage/layout`        | read        | Get homepage layout                                 |
+| `termix_homepage_get_recent_activity`                 | GET `/activity/recent`        | read        | Get recent activity                                 |
+| `termix_homepage_get_server_uptime`                   | GET `/uptime`                 | read        | Get server uptime                                   |
+| `termix_homepage_get_service_links`                   | GET `/service-links`          | read        | Get service links                                   |
+| `termix_homepage_log_new_activity`                    | POST `/activity/log`          | write       | Log a new activity                                  |
+| `termix_homepage_proxy_favicon_fetch`                 | GET `/homepage/favicon`       | read        | Proxy favicon fetch                                 |
+| `termix_homepage_proxy_json_api_url_return_parsed`    | GET `/homepage/proxy`         | read        | Proxy a JSON API URL and return the parsed response |
+| `termix_homepage_proxy_parse_rss_atom_feed`           | GET `/homepage/rss`           | read        | Proxy and parse an RSS/Atom feed                    |
+| `termix_homepage_reset_recent_activity`               | DELETE `/activity/reset`      | destructive | Reset recent activity                               |
+| `termix_homepage_save_homepage_layout`                | PUT `/homepage/layout`        | write       | Save homepage layout                                |
+| `termix_homepage_update_homepage_item`                | PUT `/homepage/items/{id}`    | write       | Update homepage item                                |
+| `termix_homepage_update_service_link`                 | PUT `/service-links/{id}`     | write       | Update service link                                 |
+
+## ai
+
+Termix's own AI assistant provider/conversation management. Enabled by default: **no**.
+
+| Tool                                                    | Operation                        | Risk        | Summary                                                |
+| ------------------------------------------------------- | -------------------------------- | ----------- | ------------------------------------------------------ |
+| `termix_ai_add_ai_provider`                             | POST `/ai/providers`             | write       | Add an AI provider                                     |
+| `termix_ai_apply_pending_proposal`                      | POST `/ai/proposals/{id}/apply`  | write       | Apply a pending proposal                               |
+| `termix_ai_delete_ai_provider`                          | DELETE `/ai/providers/{id}`      | destructive | Delete an AI provider                                  |
+| `termix_ai_delete_conversation`                         | DELETE `/ai/conversations/{id}`  | destructive | Delete a conversation                                  |
+| `termix_ai_get_one_conversation_its_messages_proposals` | GET `/ai/conversations/{id}`     | read        | Get one conversation with its messages and proposals   |
+| `termix_ai_list_models_available_provider`              | GET `/ai/providers/{id}/models`  | read        | List models available from a provider                  |
+| `termix_ai_list_models_provider_has_not_been`           | POST `/ai/probe-models`          | write       | List models for a provider that has not been saved yet |
+| `termix_ai_list_users_ai_conversations`                 | GET `/ai/conversations`          | read        | List the user's AI conversations                       |
+| `termix_ai_list_users_configured_ai_providers`          | GET `/ai/providers`              | read        | List the user's configured AI providers                |
+| `termix_ai_reject_pending_proposal`                     | POST `/ai/proposals/{id}/reject` | write       | Reject a pending proposal                              |
+| `termix_ai_send_message_stream_assistants_reply`        | POST `/ai/chat/stream`           | write       | Send a message and stream the assistant's reply        |
+| `termix_ai_update_ai_provider`                          | PATCH `/ai/providers/{id}`       | write       | Update an AI provider                                  |
+| `termix_ai_whether_ai_assistant_is_available_user`      | GET `/ai/status`                 | read        | Whether the AI assistant is available to this user     |
+
+## sync
+
+Internal desktop/server sync protocol. Enabled by default: **no**.
+
+| Tool                                               | Operation                           | Risk  | Summary                                              |
+| -------------------------------------------------- | ----------------------------------- | ----- | ---------------------------------------------------- |
+| `termix_sync_pull_deletion_tombstones_entity_type` | GET `/sync/{entityType}/tombstones` | read  | Pull deletion tombstones for an entity type          |
+| `termix_sync_pull_synced_rows_entity_type`         | GET `/sync/{entityType}`            | read  | Pull synced rows for an entity type                  |
+| `termix_sync_report_deletion_other_side_sync_pair` | POST `/sync/tombstones`             | write | Report a deletion from the other side of a sync pair |
+| `termix_sync_upsert_synced_row_syncid`             | POST `/sync/{entityType}`           | write | Upsert a synced row by syncId                        |
