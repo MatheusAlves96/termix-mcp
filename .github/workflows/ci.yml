@@ -26,7 +26,7 @@ jobs:
       - run: npm run lint
       - run: npm run format:check
       - run: npm run knip
-      - name: Check TOOLSETS.md is up to date
+      - name: Check README's Tools/Resources/Prompts section is up to date
         run: npm run spec:check-docs
 
   typecheck:

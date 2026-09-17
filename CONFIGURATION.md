@@ -16,7 +16,7 @@ ones most people change per-invocation; flags win over environment variables.
 
 | Variable                  | Flag                 | Default   | Notes                                                                                                                                         |
 | ------------------------- | -------------------- | --------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| `TERMIX_TOOLSETS`         | `--toolsets`         | `default` | Comma-separated toolset ids (see [TOOLSETS.md](TOOLSETS.md)), or `all`.                                                                       |
+| `TERMIX_TOOLSETS`         | `--toolsets`         | `default` | Comma-separated toolset ids (see [available tools in the README](README.md#available-tools-resources-and-prompts)), or `all`.                 |
 | `TERMIX_DYNAMIC_TOOLSETS` | `--dynamic-toolsets` | `false`   | Only register `termix_list_toolsets` / `termix_enable_toolset` at startup; the model enables the rest on demand. Overrides `TERMIX_TOOLSETS`. |
 
 ## Safety gates

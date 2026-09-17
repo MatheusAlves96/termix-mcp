@@ -14,7 +14,7 @@ export interface ResourceDef {
 /**
  * Cheap, read-only resources the model can pull without a tool call.
  * Exported as data (not just registered inline) so `scripts/inventory.ts`
- * can document these in TOOLSETS.md from the same source `registerResources`
+ * can document these in README.md from the same source `registerResources`
  * reads from - one list, so the docs can't silently drift from what's
  * actually registered. Each one (other than termix-status) delegates to the
  * matching catalog tool's handler by name, so the request logic - and any

@@ -9,6 +9,7 @@
 ## Checklist
 
 - [ ] `npm run verify` passes locally (lint, typecheck, test, build)
-- [ ] If this adds/removes/renames a tool: `npm run spec:inventory` was run and `TOOLSETS.md` is updated
+- [ ] If this adds/removes/renames a tool, resource, or prompt: `npm run spec:inventory` was run and
+      README.md's generated section is updated
 - [ ] If this targets a new Termix release: `COMPATIBILITY.md` is updated
 - [ ] Tests added/updated for the behavior changed

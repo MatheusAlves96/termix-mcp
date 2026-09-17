@@ -70,7 +70,7 @@ export interface PromptDef {
 
 /**
  * Exported as data (not just registered inline) so `scripts/inventory.ts`
- * can document these in TOOLSETS.md from the same source `registerPrompts`
+ * can document these in README.md from the same source `registerPrompts`
  * reads from - one list, so the docs can't silently drift from what's
  * actually registered. Prompts are conversation starters, not automations -
  * each just returns text telling the model which tools to call and in what
