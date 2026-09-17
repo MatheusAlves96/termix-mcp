@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.2](https://github.com/MatheusAlves96/termix-mcp/compare/termix-mcp-v0.1.1...termix-mcp-v0.1.2) (2026-09-17)
+
+
+### Bug Fixes
+
+* format CHANGELOG.md to match Prettier style ([2196bb0](https://github.com/MatheusAlves96/termix-mcp/commit/2196bb0ad80edf8508deb90f4051596428c1c839))
+
 ## [0.1.1](https://github.com/MatheusAlves96/termix-mcp/compare/termix-mcp-v0.1.0...termix-mcp-v0.1.1) (2026-09-17)
 
 ### Features
